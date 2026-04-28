@@ -18,4 +18,19 @@ pub struct LkgEntry {
 
 impl LkgEntry {
     pub const SCHEMA_VERSION: u8 = 1;
+
+    /// Construct a v1 `LkgEntry` from supervisor outcome fields.
+    ///
+    /// Required because `#[non_exhaustive]` (D-08) blocks struct-literal construction
+    /// from outside this crate. Plan 02 (`holt-supervisor`) calls this on every Ok
+    /// outcome before persisting via `holt_schemas::atomic_write`.
+    pub fn new(stdout: String, exit_code: i32, captured_at: String, duration_ms: u64) -> Self {
+        Self {
+            schema_version: Self::SCHEMA_VERSION,
+            stdout,
+            exit_code,
+            captured_at,
+            duration_ms,
+        }
+    }
 }

@@ -1,0 +1,83 @@
+//! Caller-facing supervisor options + outcome enums.
+//!
+//! Source: CONTEXT.md D-09, D-11. Plan 03 (`holt-cli`) constructs `SupervisorOptions`
+//! from clap-parsed args; Phase 2's hooks may also fan in here when `holt run`
+//! becomes the main statusLine entry point.
+
+use std::path::PathBuf;
+use std::time::Duration;
+
+/// D-11: default supervisor timeout. Configurable via `holt run --timeout`.
+///
+/// Rationale: Claude Code's default statusLine `refreshInterval` is 5s; 2s leaves
+/// headroom while staying under the next refresh boundary. The user's wrapped
+/// script gets the remainder of the budget after holt's ~1.5ms overhead.
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// Configuration passed into [`crate::supervisor::wrap_and_run`].
+#[derive(Debug, Clone)]
+pub struct SupervisorOptions {
+    /// Hard deadline (D-11 default 2 seconds).
+    pub timeout: Duration,
+    /// Session id — keys the LKG cache file path (`<cache_root>/lkg/<session_id>.json`).
+    pub session_id: String,
+    /// CC stdin bytes to forward to the wrapped script (Phase 2 fills this; v0.1 may be empty).
+    pub stdin_bytes: Vec<u8>,
+    /// Cache root (defaults to `~/.cache/holt/`; tests inject a tempdir).
+    pub cache_root: PathBuf,
+}
+
+impl SupervisorOptions {
+    /// Build options with the D-11 default timeout and an empty stdin payload.
+    /// Tests pass `tempdir().path().to_path_buf()` for `cache_root`.
+    pub fn with_defaults(session_id: String, cache_root: PathBuf) -> Self {
+        Self {
+            timeout: DEFAULT_TIMEOUT,
+            session_id,
+            stdin_bytes: Vec::new(),
+            cache_root,
+        }
+    }
+}
+
+/// Outcome of a single supervised invocation.
+///
+/// `Ok` triggers an LKG cache update (D-10). `Breach` writes one entry to
+/// `breaches.log` (D-13). Both variants append exactly one line to
+/// `timings.jsonl` (D-12 / CORE-02).
+#[derive(Debug, Clone)]
+pub enum SupervisorOutcome {
+    Ok {
+        stdout: String,
+        exit_code: i32,
+        duration_ms: u64,
+    },
+    Breach {
+        kind: BreachKind,
+        exit_code: Option<i32>,
+        duration_ms: u64,
+        stderr_excerpt: String,
+    },
+}
+
+/// Why a supervised invocation breached.
+///
+/// `ParseFail` is reserved for the CLI-side stdin parser (CORE-08); the
+/// supervisor itself only emits `Timeout` and `SpawnFail`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BreachKind {
+    Timeout,
+    ParseFail,
+    SpawnFail,
+}
+
+impl BreachKind {
+    /// Stable string used in `breaches.log` JSON records.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            BreachKind::Timeout => "timeout",
+            BreachKind::ParseFail => "parse_fail",
+            BreachKind::SpawnFail => "spawn_fail",
+        }
+    }
+}
