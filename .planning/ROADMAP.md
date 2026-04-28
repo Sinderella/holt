@@ -34,7 +34,10 @@ Ship a Rust shim that wraps the user's existing `statusLine.command` so Claude C
   4. Feeding malformed CC stdin (`{"session_id":` truncated) to `holt run` does NOT error, does NOT panic — the binary captures a `parse_fail` event in `breaches.log`, falls through to the LKG cache (or empty stdout if no LKG yet), and exits 0; `holt-schemas::read_heartbeat()` exposed for use by Phase 2 returns `Result<Option<Heartbeat>, _>` and unit tests confirm it returns `Ok(None)` (never `Err` and never panics) for: zero-byte file, truncated JSON, unrecognized `schema_version`, missing required fields.
   5. `cargo tree --workspace --duplicates -p holt-render` reports zero direct or transitive dependency edge from `holt-render` to `holt-supervisor`; CI fails the PR if this edge is introduced (asserted via a `tests/architecture_dag.rs` test that walks `cargo metadata` output).
 
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 01-01-PLAN.md — Workspace skeleton + holt-schemas keystone (Heartbeat, atomic_write, read_heartbeat)
+- [ ] 01-02-PLAN.md — holt-supervisor wedge (chokepoint, LKG, timings.jsonl, breaches.log, killpg + EPERM fallback)
+- [ ] 01-03-PLAN.md — holt-cli (run / --self-bench / --version) + architecture_dag test + CI workflow
 
 ### Phase 2: Heartbeat hook (write side)
 
