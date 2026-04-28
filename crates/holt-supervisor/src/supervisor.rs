@@ -105,13 +105,22 @@ pub fn wrap_and_run(program: &str, args: &[&str], opts: SupervisorOptions) -> Su
     // Pump CC stdin into the child stdin in a thread to avoid deadlocking on
     // a slow reader. Best-effort: broken-pipe is normal if the child exits
     // before reading.
-    if !opts.stdin_bytes.is_empty() {
-        if let Some(mut stdin) = child.stdin().take() {
+    //
+    // CR-03: ALWAYS take the stdin handle so it gets closed. If we don't take
+    // it, the writable end stays attached to the WrappedChild (and moves into
+    // the wait thread), so any wrapped script that does `read_to_end(stdin)`
+    // — `cat`, `jq`, ccstatusline — blocks forever waiting for EOF and
+    // synthesizes a guaranteed timeout breach. Taking the handle drops it at
+    // the end of this scope when there's nothing to write, which closes the
+    // pipe and gives the child immediate EOF.
+    if let Some(mut stdin) = child.stdin().take() {
+        if !opts.stdin_bytes.is_empty() {
             let bytes = opts.stdin_bytes.clone();
             thread::spawn(move || {
                 let _ = stdin.write_all(&bytes);
             });
         }
+        // Else: stdin drops at end of `if let` scope → pipe closed → child sees EOF.
     }
 
     // Drain stdout/stderr in their own threads so the child can't block on a
