@@ -5,6 +5,8 @@
 //!   - `holt --self-bench [--json]` — measure holt-only render-path overhead
 //!   - `holt --version`             — clap-generated from Cargo.toml
 
+#![forbid(unsafe_code)] // WR-09: defence-in-depth for the binary crate.
+
 mod cli;
 mod run;
 mod self_bench;

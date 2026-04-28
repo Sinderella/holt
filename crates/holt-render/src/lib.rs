@@ -3,4 +3,6 @@
 //! HARD CONSTRAINT C2: this crate MUST NOT depend on holt-supervisor.
 //! Enforced by tests/architecture_dag.rs (added in plan 03).
 
+#![forbid(unsafe_code)] // WR-09: render path is audit-quality.
+
 pub fn placeholder() {}
