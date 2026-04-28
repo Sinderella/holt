@@ -2,13 +2,15 @@
 //!
 //! Returns Ok(None) for every "session unreadable" outcome:
 //!   - file does not exist (ENOENT)
+//!   - permission denied (mode 0000 from a stale prior install) — WR-02
+//!   - target path is a directory — WR-02
 //!   - zero-byte file
 //!   - truncated / invalid JSON
 //!   - unrecognized schema_version
 //!   - missing required field (session_id)
 //!
-//! Returns Err only for I/O errors that are NOT "file missing".
-//! Never panics. Never .unwrap()s. Never .expect()s.
+//! Returns Err only for I/O errors that are NOT "session unreadable" by the
+//! render path's standard. Never panics. Never .unwrap()s. Never .expect()s.
 
 use std::fs;
 use std::io;
@@ -18,11 +20,22 @@ use crate::error::ReaderError;
 use crate::heartbeat::Heartbeat;
 
 pub fn read_heartbeat(path: &Path) -> Result<Option<Heartbeat>, ReaderError> {
-    // Step 1: read file. ENOENT → Ok(None) (the "missing" case, not an error).
+    // Step 1: read file. The full "session unreadable from the render path's
+    // perspective" set short-circuits to Ok(None):
+    //   - NotFound: file missing (the canonical case).
+    //   - PermissionDenied: stale install left a 0000-mode file; render path
+    //     can't read it so it's effectively missing.
+    //   - IsADirectory: someone created a directory at the heartbeat path;
+    //     render path can't read it so it's effectively missing.
+    // (IsADirectory is a stable ErrorKind since Rust 1.83; MSRV is 1.87.)
     let bytes = match fs::read(path) {
         Ok(b) => b,
-        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(e) => return Err(ReaderError::Io(e)),
+        Err(e) => match e.kind() {
+            io::ErrorKind::NotFound
+            | io::ErrorKind::PermissionDenied
+            | io::ErrorKind::IsADirectory => return Ok(None),
+            _ => return Err(ReaderError::Io(e)),
+        },
     };
 
     // Step 2: zero-byte file → Ok(None).
