@@ -1,0 +1,23 @@
+{
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "cwd": "/Users/dev/projects/myrepo",
+  "transcript_path": "/tmp/cc-transcripts/abc123.jsonl",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cargo test --workspace"
+  },
+  "tool_response": {
+    "stdout": "test result: ok. 28 passed; 0 failed; 0 ignored",
+    "stderr": "",
+    "exit_code": 0
+  },
+  "model": {
+    "display_name": "Opus"
+  },
+  "workspace": {
+    "git_worktree": "myrepo/feature-branch"
+  },
+  "last_assistant_at": "2026-04-28T10:00:05Z",
+  "permission_mode": "default"
+}

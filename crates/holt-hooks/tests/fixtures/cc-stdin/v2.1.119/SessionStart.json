@@ -1,0 +1,15 @@
+{
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "cwd": "/Users/dev/projects/myrepo",
+  "transcript_path": "/tmp/cc-transcripts/abc123.jsonl",
+  "hook_event_name": "SessionStart",
+  "source": "startup",
+  "model": {
+    "display_name": "Opus"
+  },
+  "workspace": {
+    "git_worktree": "myrepo/feature-branch"
+  },
+  "last_assistant_at": "2026-04-28T10:00:00Z",
+  "permission_mode": "default"
+}

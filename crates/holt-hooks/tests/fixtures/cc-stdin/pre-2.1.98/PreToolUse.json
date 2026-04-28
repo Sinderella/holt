@@ -1,0 +1,15 @@
+{
+  "session_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+  "cwd": "/Users/dev/projects/myrepo",
+  "transcript_path": "/tmp/cc-transcripts/legacy.jsonl",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/Users/dev/projects/myrepo/src/main.rs"
+  },
+  "model": {
+    "display_name": "Sonnet"
+  },
+  "last_assistant_at": "2026-04-28T09:55:00Z",
+  "permission_mode": "default"
+}
