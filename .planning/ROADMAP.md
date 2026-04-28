@@ -54,7 +54,9 @@ Ship a Rust shim that wraps the user's existing `statusLine.command` so Claude C
   4. With `$XDG_RUNTIME_DIR` unset and `$TMPDIR` unset, the hook still writes a heartbeat to `~/.cache/holt/sessions/<sid>.json` AND emits a single one-line stderr warning naming the fallback path; with all three locations un-writable, the hook exits 0 silently (never blocks CC) and writes a parse-fail-style entry to `breaches.log`.
   5. Feeding a CC stdin where `workspace.git_worktree` is absent (older CC) AND a stdin where it is present (CC v2.1.98+) both produce a non-empty `cwd_label` field: derived from `workspace.git_worktree` when present, falling back to `<repo>/<branch>` parsed from `cwd` otherwise — verified by two paired fixtures.
 
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 02-01-PLAN.md — Fixture capture + holt-hooks crate (HookStdin defensive parse, HookEvent enum, three-tier fallback path, assemble_heartbeat, atomic_write + 0o600, parse_fail / unwritable breach routing, 1000× SIGKILL atomicity test)
+- [ ] 02-02-PLAN.md — holt-cli `holt hook <event>` subcommand wiring + integration tests + D-15 hook self-bench gate added to CI
 
 ### Phase 3: install-hooks UX
 
