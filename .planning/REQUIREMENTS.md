@@ -117,44 +117,50 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Empty until roadmap creation. The roadmapper populates this table mapping each v1 REQ-ID to a phase.
+Every v1 REQ-ID maps to exactly one phase of the v0.1 milestone roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | TBD | Pending |
-| CORE-02 | TBD | Pending |
-| CORE-03 | TBD | Pending |
-| CORE-04 | TBD | Pending |
-| CORE-05 | TBD | Pending |
-| CORE-06 | TBD | Pending |
-| CORE-07 | TBD | Pending |
-| CORE-08 | TBD | Pending |
-| CORE-09 | TBD | Pending |
-| CORE-10 | TBD | Pending |
-| HOOK-01 | TBD | Pending |
-| HOOK-02 | TBD | Pending |
-| HOOK-03 | TBD | Pending |
-| HOOK-04 | TBD | Pending |
-| HOOK-05 | TBD | Pending |
-| HOOK-06 | TBD | Pending |
-| HOOK-07 | TBD | Pending |
-| HOOK-08 | TBD | Pending |
-| HOOK-09 | TBD | Pending |
-| HOOK-10 | TBD | Pending |
-| HOOK-11 | TBD | Pending |
-| DIST-01 | TBD | Pending |
-| DIST-02 | TBD | Pending |
-| DIST-03 | TBD | Pending |
-| DIST-04 | TBD | Pending |
-| DIST-05 | TBD | Pending |
-| DIST-06 | TBD | Pending |
-| DIST-07 | TBD | Pending |
+| CORE-01 | Phase 1 | Pending |
+| CORE-02 | Phase 1 | Pending |
+| CORE-03 | Phase 1 | Pending |
+| CORE-04 | Phase 1 | Pending |
+| CORE-05 | Phase 1 | Pending |
+| CORE-06 | Phase 1 | Pending |
+| CORE-07 | Phase 1 | Pending |
+| CORE-08 | Phase 1 | Pending |
+| CORE-09 | Phase 1 | Pending |
+| CORE-10 | Phase 1 | Pending |
+| HOOK-01 | Phase 2 | Pending |
+| HOOK-02 | Phase 2 | Pending |
+| HOOK-03 | Phase 2 | Pending |
+| HOOK-04 | Phase 2 | Pending |
+| HOOK-05 | Phase 2 | Pending |
+| HOOK-06 | Phase 2 | Pending |
+| HOOK-07 | Phase 3 | Pending |
+| HOOK-08 | Phase 3 | Pending |
+| HOOK-09 | Phase 3 | Pending |
+| HOOK-10 | Phase 3 | Pending |
+| HOOK-11 | Phase 1 | Pending |
+| DIST-01 | Phase 4 | Pending |
+| DIST-02 | Phase 4 | Pending |
+| DIST-03 | Phase 4 | Pending |
+| DIST-04 | Phase 4 | Pending |
+| DIST-05 | Phase 4 | Pending |
+| DIST-06 | Phase 4 | Pending |
+| DIST-07 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0 (filled in by roadmapper)
-- Unmapped: 28 ⚠️ (will become 0 after roadmap)
+- Mapped to phases: 28 ✓
+- Unmapped: 0
+
+**Phase distribution:**
+- Phase 1 (Schema + supervisor substrate): 11 requirements (CORE-01..10, HOOK-11)
+- Phase 2 (Heartbeat hook write side): 6 requirements (HOOK-01..06)
+- Phase 3 (install-hooks UX): 4 requirements (HOOK-07..10)
+- Phase 4 (Distribution + launch): 7 requirements (DIST-01..07)
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after initial definition*
+*Last updated: 2026-04-28 — traceability populated by roadmapper (28/28 mapped)*
