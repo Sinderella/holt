@@ -1,5 +1,8 @@
 [workspace]
-resolver = "2"
+# WR-11: resolver = "3" is implied by edition = "2024" and MSRV = 1.87
+# (resolver 3 stabilized in 1.84). Dropping the explicit `resolver = "2"` line
+# gives us MSRV-aware feature unification by default; we set MSRV in
+# [workspace.package] above so this is safe.
 members = [
     "crates/holt-schemas",
     "crates/holt-supervisor",
