@@ -35,7 +35,9 @@ fn empty_stdin_does_not_hang_stdin_reading_child() {
          — stdin pipe is probably being left open (CR-03)"
     );
     match outcome {
-        SupervisorOutcome::Ok { stdout, exit_code, .. } => {
+        SupervisorOutcome::Ok {
+            stdout, exit_code, ..
+        } => {
             assert_eq!(stdout, "");
             assert_eq!(exit_code, 0);
         }

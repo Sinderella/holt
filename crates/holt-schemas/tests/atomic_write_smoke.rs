@@ -95,7 +95,10 @@ fn no_orphan_tmp_when_inner_pipeline_errors() {
     // cleaned up by tempdir's Drop.
     fs::set_permissions(&ro_parent, fs::Permissions::from_mode(0o755)).unwrap();
 
-    assert!(result.is_err(), "expected error from atomic_write into read-only dir");
+    assert!(
+        result.is_err(),
+        "expected error from atomic_write into read-only dir"
+    );
 
     let entries: Vec<String> = fs::read_dir(&ro_parent)
         .unwrap()
