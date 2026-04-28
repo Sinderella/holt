@@ -49,4 +49,49 @@ pub struct Heartbeat {
 
 impl Heartbeat {
     pub const SCHEMA_VERSION: u8 = 1;
+
+    /// Construct a `Heartbeat` with `schema_version = SCHEMA_VERSION` automatically.
+    /// Required because `Heartbeat` is `#[non_exhaustive]` (D-08) — external crates
+    /// (`holt-hooks`, the future v1.0 orchestrator writers) cannot use struct-literal
+    /// syntax. Same pattern as `LkgEntry::new` (added in Plan 01-02).
+    ///
+    /// All v1.0 fields that v0.1 leaves empty (`mode`, `context_pct_real`,
+    /// `burn_rate_usd_per_min`) are exposed here so the constructor stays stable
+    /// when v1.0 lands without the API breaking. Phase 2 callers pass `None` for
+    /// fields they don't populate.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        session_id: String,
+        pid: u32,
+        started: String,
+        updated: String,
+        cwd: String,
+        cwd_label: String,
+        mode: Option<String>,
+        current_tool: Option<String>,
+        blocked_on: Option<String>,
+        context_pct_real: Option<f64>,
+        burn_rate_usd_per_min: Option<f64>,
+        last_assistant_at: Option<String>,
+        model_display: Option<String>,
+        writer_version: String,
+    ) -> Self {
+        Self {
+            schema_version: Self::SCHEMA_VERSION,
+            session_id,
+            pid,
+            started,
+            updated,
+            cwd,
+            cwd_label,
+            mode,
+            current_tool,
+            blocked_on,
+            context_pct_real,
+            burn_rate_usd_per_min,
+            last_assistant_at,
+            model_display,
+            writer_version,
+        }
+    }
 }

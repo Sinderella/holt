@@ -6,4 +6,27 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+# Phase 1 keystone — Heartbeat type, atomic_write helper, read_heartbeat (used in tests).
+holt-schemas = { path = "../holt-schemas" }
+# breach routing for parse_fail / unwritable (D-04, D-06 tier-4); also paths::default_cache_root
+# for tier-3 of the D-06 fallback chain.
+holt-supervisor = { path = "../holt-supervisor" }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+# ISO 8601 timestamps for Heartbeat.started / .updated (per CLAUDE.md "Use jiff").
+jiff = { workspace = true }
+# Top-level error surface for handle_event internals; never bubbled to caller.
+anyhow = { workspace = true }
+
+# Unix-only: nix is currently used for getuid()-based path salting in path.rs
+# (D-06 tier-2 builds $TMPDIR/holt-$UID/sessions/). We do NOT rely on nix for
+# the 0600 chmod (that uses std::os::unix::fs::PermissionsExt). Pulled in for
+# symmetry with holt-supervisor and to keep the door open for the SIGKILL test
+# driver to call nix::sys::signal::kill if needed.
+[target.'cfg(unix)'.dependencies]
+nix = { workspace = true, features = ["user"] }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+serde_json = { workspace = true }
 holt-schemas = { path = "../holt-schemas" }
