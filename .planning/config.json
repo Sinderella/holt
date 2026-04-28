@@ -1,0 +1,23 @@
+{
+  "mode": "yolo",
+  "granularity": "coarse",
+  "parallelization": true,
+  "commit_docs": true,
+  "model_profile": "balanced",
+  "model_overrides": {
+    "researcher_model": "opus",
+    "roadmapper_model": "opus",
+    "domain_researcher_model": "opus"
+  },
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": false,
+    "auto_advance": true
+  },
+  "planning": {
+    "commit_docs": true
+  },
+  "subagent_timeout": 300000
+}
