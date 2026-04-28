@@ -12,6 +12,16 @@
 //! is a *check*, not a transform.
 
 use std::io::{self, Read};
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+/// CR-04: stdin-slurp deadline. The render-path budget is sub-20ms (D-04); an
+/// unbounded `read_to_end` on stdin would let a slow / never-closing CC pipe
+/// blow that budget silently. 200ms is generous compared to the supervisor's
+/// 2s wait deadline (DEFAULT_TIMEOUT) but well under any plausible refresh
+/// boundary, and keeps the worst case bounded by exactly one render fire.
+const STDIN_SLURP_DEADLINE: Duration = Duration::from_millis(200);
 
 pub enum StdinParseOutcome {
     /// Stdin parsed cleanly as JSON. `raw` holds the unmodified bytes exactly
@@ -37,11 +47,25 @@ pub enum StdinParseOutcome {
 }
 
 pub fn slurp_and_parse() -> StdinParseOutcome {
-    let mut buf = Vec::with_capacity(4096);
-    if io::stdin().read_to_end(&mut buf).is_err() {
-        return StdinParseOutcome::Empty;
-    }
-    if buf.is_empty() {
+    // CR-04: bound the slurp with a deadline. We drop the read thread on
+    // timeout — its OS thread keeps living until stdin EOFs, but the render
+    // path returns immediately. For our use case (a short-lived statusLine
+    // process) this is acceptable: the leaked thread dies with the process.
+    let (tx, rx) = mpsc::channel::<(bool, Vec<u8>)>();
+    thread::spawn(move || {
+        let mut buf = Vec::with_capacity(4096);
+        let read_ok = io::stdin().read_to_end(&mut buf).is_ok();
+        let _ = tx.send((read_ok, buf));
+    });
+
+    let (read_ok, buf) = match rx.recv_timeout(STDIN_SLURP_DEADLINE) {
+        Ok(pair) => pair,
+        // Deadline elapsed → render path must not block. Treat as Empty so
+        // the caller falls through to LKG (or empty stdout) without breaching.
+        Err(_) => return StdinParseOutcome::Empty,
+    };
+
+    if !read_ok || buf.is_empty() {
         return StdinParseOutcome::Empty;
     }
 
