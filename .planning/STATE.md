@@ -2,26 +2,26 @@
 
 **Project:** holt — Rust statusLine for Claude Code with multi-session orchestration and an ASCII otter pet (Nak)
 **Milestone:** v0.1 — Runtime hygiene wedge (the lovable MVP, target 3–4 weekends)
-**Last updated:** 2026-04-28
+**Last updated:** 2026-04-28 (Phase 1 complete)
 
 ## Project Reference
 
 **Core Value:** Make Claude Code's statusLine never silently fail, never block input, and tell the user — through Nak — exactly what each of their sessions is doing.
 
-**Current focus:** Phase 1 ready to plan. The keystone `holt-schemas` crate + `holt-supervisor` wedge + `holt-cli` skeleton — the substrate every subsequent phase depends on.
+**Current focus:** Phase 2 ready to plan. The `holt-hooks` crate + `holt hook <event>` subcommand — the heartbeat write side that v1.0 orchestrator + Nak compose on top of.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 1 — Schema + supervisor substrate |
+| Phase | 2 — Heartbeat hook (write side) |
 | Plan | (none — phase not yet planned) |
-| Status | Roadmap approved, awaiting `/gsd-plan-phase 1` |
-| Progress | 0 / 4 phases complete |
+| Status | Phase 1 complete (verified passed; 16/24 review findings fixed); awaiting `/gsd-plan-phase 2` |
+| Progress | 1 / 4 phases complete |
 
 ```
-[ ] Phase 1: Schema + supervisor substrate    ← NEXT
-[ ] Phase 2: Heartbeat hook (write side)
+[x] Phase 1: Schema + supervisor substrate    ✓ 2026-04-28 (verified passed; 28/28 tests; review-fix all critical+warning)
+[ ] Phase 2: Heartbeat hook (write side)      ← NEXT
 [ ] Phase 3: install-hooks UX
 [ ] Phase 4: Distribution + launch
 ```
@@ -30,10 +30,10 @@
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| Phases shipped | 4 | 0 |
-| v1 requirements covered | 28 / 28 | 28 mapped, 0 implemented |
-| Cold-start overhead (macOS arm64) | < 20ms | not yet measured |
-| Cold-start overhead (Linux x86_64) | < 20ms | not yet measured |
+| Phases shipped | 4 | 1 |
+| v1 requirements covered | 28 / 28 | 28 mapped, 11 implemented (CORE-01..10 + HOOK-11) |
+| Cold-start overhead (macOS arm64) | < 20ms | **PASS** — `holt --self-bench --json --iterations 30` reports p95=0us, well under budget (2026-04-28) |
+| Cold-start overhead (Linux x86_64) | < 20ms | not yet measured (CI matrix runs it on every PR) |
 
 ## Accumulated Context
 
@@ -71,13 +71,15 @@
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-plan-phase 1` to decompose Phase 1 (Schema + supervisor substrate) into 1–3 plans per coarse granularity.
+**Next action:** Run `/gsd-plan-phase 2` to decompose Phase 2 (Heartbeat hook write side) into 1–3 plans per coarse granularity. Note the Open Question carry-forward: capture verbatim CC v2.1.119 stdin fixtures (PreToolUse / PostToolUse / Stop) as `tests/fixtures/cc-stdin/v2.1.119.json` before Phase 2 code starts.
 
 **Files to read on session resume:**
 - `/Users/thanats/projects/holt/.planning/ROADMAP.md` — phase structure + success criteria
 - `/Users/thanats/projects/holt/.planning/REQUIREMENTS.md` — v1 REQ-IDs with phase mappings
 - `/Users/thanats/projects/holt/.planning/PROJECT.md` — north star, constraints, key decisions
 - `/Users/thanats/projects/holt/.planning/research/SUMMARY.md` — drift since 2026-04-28, hard constraints, open questions
+- `/Users/thanats/projects/holt/.planning/phases/01-schema-supervisor-substrate/` — Phase 1 artifacts (CONTEXT, RESEARCH, plans, SUMMARY, VERIFICATION, REVIEW, REVIEW-FIX)
+- `/Users/thanats/projects/holt/crates/holt-schemas/src/{heartbeat.rs,reader.rs,writer.rs,lkg.rs,error.rs,lib.rs}` — Phase 1 keystone API (atomic_write, read_heartbeat, Heartbeat, LkgEntry, ReaderError) — Phase 2 builds on this directly
 - `/Users/thanats/projects/holt/docs/02-scope.md` — locked v0.1 IN/OUT
 - `/Users/thanats/projects/holt/docs/05-schemas.md` — heartbeat + pet state v1
 
