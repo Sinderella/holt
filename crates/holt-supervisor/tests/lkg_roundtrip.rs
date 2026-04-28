@@ -20,6 +20,7 @@ fn ok_outcome_writes_readable_lkg_entry() {
         session_id: "test-lkg".into(),
         stdin_bytes: Vec::new(),
         cache_root: cache.path().to_path_buf(),
+        writer_version: "test-0.0.0",
     };
 
     let _ = wrap_and_run("bash", &["-c", "echo cached-line"], opts);

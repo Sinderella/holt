@@ -55,6 +55,7 @@ pub fn run_self_bench(iterations: u32) -> BenchResult {
             session_id: "self-bench".into(),
             stdin_bytes: Vec::new(),
             cache_root: cache_root.clone(),
+            writer_version: env!("CARGO_PKG_VERSION"),
         };
 
         let t_total = Instant::now();

@@ -64,6 +64,11 @@ struct BreachRecord {
 /// Append a breach record to `<cache_root>/breaches.log`. Rotation policy is
 /// shared with `timings.jsonl` (5MB → `.1`, see [`crate::timings::MAX_BYTES`]).
 ///
+/// `writer_version` is the holt-binary version (D-13). Callers pass
+/// `env!("CARGO_PKG_VERSION")` from their binary crate, NOT the supervisor
+/// crate's version — a triager looking at a breach record wants to know which
+/// `holt` shipped to the user (WR-08).
+///
 /// Best-effort: returns the underlying I/O error on failure but supervisor
 /// callers ignore the result — telemetry must never fail the render path.
 pub fn append_breach(
@@ -72,6 +77,7 @@ pub fn append_breach(
     stdin_bytes: &[u8],
     stderr_bytes: &[u8],
     exit_code: Option<i32>,
+    writer_version: &'static str,
 ) -> std::io::Result<()> {
     let mut env_capture = Map::new();
     for &k in ENV_ALLOWLIST {
@@ -94,7 +100,7 @@ pub fn append_breach(
         stdin_excerpt,
         stderr_excerpt,
         exit_code,
-        writer_version: env!("CARGO_PKG_VERSION"),
+        writer_version,
     };
 
     let path = breaches_path(cache_root);

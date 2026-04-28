@@ -17,6 +17,7 @@ fn echo_hello_returns_ok_and_writes_timings() {
         session_id: "test-passthrough".into(),
         stdin_bytes: Vec::new(),
         cache_root: cache.path().to_path_buf(),
+        writer_version: "test-0.0.0",
     };
 
     let outcome = wrap_and_run("bash", &["-c", "echo hello"], opts);

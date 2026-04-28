@@ -20,6 +20,7 @@ fn timeout_breach_kills_descendants_and_writes_breach_log() {
         session_id: "test-killpg".into(),
         stdin_bytes: Vec::new(),
         cache_root: cache.path().to_path_buf(),
+        writer_version: "test-0.0.0",
     };
 
     let started = Instant::now();

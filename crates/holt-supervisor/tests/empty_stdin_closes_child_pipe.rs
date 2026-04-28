@@ -22,6 +22,7 @@ fn empty_stdin_does_not_hang_stdin_reading_child() {
         session_id: "test-empty-stdin".into(),
         stdin_bytes: Vec::new(),
         cache_root: cache.path().to_path_buf(),
+        writer_version: "test-0.0.0",
     };
 
     let started = Instant::now();

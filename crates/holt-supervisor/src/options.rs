@@ -25,17 +25,29 @@ pub struct SupervisorOptions {
     pub stdin_bytes: Vec<u8>,
     /// Cache root (defaults to `~/.cache/holt/`; tests inject a tempdir).
     pub cache_root: PathBuf,
+    /// WR-08: holt-binary version stamped into breaches.log records (D-13).
+    /// The supervisor crate's own `CARGO_PKG_VERSION` is meaningless to a
+    /// triager — they want to know which `holt` binary wrote the record.
+    /// Callers (holt-cli/main.rs) pass `env!("CARGO_PKG_VERSION")` from the
+    /// binary crate. Static lifetime so we can keep `BreachRecord::writer_version`
+    /// as `&'static str` without an extra allocation per breach.
+    pub writer_version: &'static str,
 }
 
 impl SupervisorOptions {
     /// Build options with the D-11 default timeout and an empty stdin payload.
     /// Tests pass `tempdir().path().to_path_buf()` for `cache_root`.
+    ///
+    /// `writer_version` defaults to the supervisor crate's own version, which
+    /// is acceptable for tests. Production callers SHOULD set it explicitly
+    /// from their binary crate's `env!("CARGO_PKG_VERSION")`.
     pub fn with_defaults(session_id: String, cache_root: PathBuf) -> Self {
         Self {
             timeout: DEFAULT_TIMEOUT,
             session_id,
             stdin_bytes: Vec::new(),
             cache_root,
+            writer_version: env!("CARGO_PKG_VERSION"),
         }
     }
 }

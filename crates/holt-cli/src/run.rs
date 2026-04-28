@@ -51,6 +51,7 @@ pub fn run(timeout: Option<String>, session_id: Option<String>, wrapped: Vec<Str
                 excerpt.as_bytes(),
                 b"",
                 None,
+                env!("CARGO_PKG_VERSION"),
             );
             emit_lkg_or_empty(&cache_root, &session_id);
             return 0;
@@ -64,12 +65,15 @@ pub fn run(timeout: Option<String>, session_id: Option<String>, wrapped: Vec<Str
         .and_then(|s| humantime::parse_duration(s).ok())
         .unwrap_or(Duration::from_secs(2));
 
-    // Step 3: dispatch through the chokepoint.
+    // Step 3: dispatch through the chokepoint. WR-08: stamp the holt-cli
+    // binary's CARGO_PKG_VERSION (not the supervisor crate's) so breach
+    // records identify the shipped binary.
     let opts = SupervisorOptions {
         timeout: parsed_timeout,
         session_id: session_id.clone(),
         stdin_bytes,
         cache_root: cache_root.clone(),
+        writer_version: env!("CARGO_PKG_VERSION"),
     };
     let program = wrapped[0].as_str();
     let args: Vec<&str> = wrapped[1..].iter().map(String::as_str).collect();

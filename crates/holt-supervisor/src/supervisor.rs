@@ -223,6 +223,7 @@ pub fn wrap_and_run(program: &str, args: &[&str], opts: SupervisorOptions) -> Su
                 &opts.stdin_bytes,
                 &stderr_bytes,
                 None,
+                opts.writer_version,
             );
             let _ = append_timings_for(&opts, dur_ms, None, &stderr_bytes);
 
@@ -251,6 +252,7 @@ fn finalize_spawn_fail(
         &opts.stdin_bytes,
         stderr.as_bytes(),
         None,
+        opts.writer_version,
     );
     let _ = append_timings_for(opts, dur_ms, None, stderr.as_bytes());
     SupervisorOutcome::Breach {
