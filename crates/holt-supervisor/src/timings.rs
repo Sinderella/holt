@@ -30,6 +30,23 @@ pub fn append_timings(cache_root: &Path, line: &str) -> io::Result<()> {
 /// `.1`), then opens the target fresh. Rotation is best-effort: if the rename
 /// fails (e.g., target read-only), the writer still appends — the cap is a
 /// soft policy, not a hard guarantee.
+///
+/// **Known limitation (WR-03 — accepted at v0.1):** when two holt processes
+/// (two different CC sessions on the same machine, the explicit multi-session
+/// use case) both observe `size > MAX_BYTES` and both rename `<file>` →
+/// `<file>.1`, the second clobbers the first's `.1` (lost log data) and the
+/// second's about-to-write line may land in the renamed file. On Linux this
+/// is benign-ish; on Windows the rename can fail because the file is open
+/// for append by the other process. We accept this tradeoff because:
+///   1. The render path runs N times per session. Worst-case data loss on a
+///      `.1` collision is bounded — the live file always carries the most
+///      recent ~5MB and only `holt doctor` (v0.5) reads `.1` for trends.
+///   2. The fix is an advisory `flock` on a sibling `.lock` file, which would
+///      need a `fs2`-equivalent dep — and `fs2` is forbidden at v0.1
+///      (CLAUDE.md `<forbidden_crates>`). Hand-rolling `flock(2)` would also
+///      pull `unsafe` into a `#![forbid(unsafe_code)]` crate.
+///   3. **Trigger to harden**: ≥1 user report of corrupted `.1` rotation, OR
+///      Phase 4 introduces a hooks-managed lock-file convention we can reuse.
 pub(crate) fn append_jsonl(path: &Path, line: &str) -> io::Result<()> {
     debug_assert!(line.ends_with('\n'), "caller must include trailing newline");
 
