@@ -15,3 +15,11 @@ holt-supervisor = { path = "../holt-supervisor" }
 holt-render = { path = "../holt-render" }
 holt-orchestrator = { path = "../holt-orchestrator" }
 holt-hooks = { path = "../holt-hooks" }
+clap.workspace = true
+anyhow.workspace = true
+humantime.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

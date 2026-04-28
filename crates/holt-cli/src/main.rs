@@ -1,9 +1,41 @@
 //! holt — Rust statusLine for Claude Code.
 //!
-//! Plan 03 wires up the clap derive subcommands (`run`, `--self-bench`, `--version`).
-//! Plan 01 ships only this stub so `cargo build --workspace` exits 0.
+//! Three entry points (D-14 / RESEARCH §Pattern 8):
+//!   - `holt run -- <wrapped>`      — wrap + supervise a user statusLine
+//!   - `holt --self-bench [--json]` — measure holt-only render-path overhead
+//!   - `holt --version`             — clap-generated from Cargo.toml
+
+mod cli;
+mod run;
+mod self_bench;
+mod stdin;
+
+use clap::Parser;
 
 fn main() {
-    eprintln!("holt: not yet wired (plan 03 dispatches subcommands)");
-    std::process::exit(2);
+    let cli = cli::Cli::parse();
+
+    let exit_code = if cli.self_bench {
+        let result = self_bench::run_self_bench(cli.iterations.max(10));
+        if cli.json {
+            self_bench::print_json(&result);
+        } else {
+            self_bench::print_human(&result);
+        }
+        if result.passed { 0 } else { 1 }
+    } else {
+        match cli.command {
+            Some(cli::Command::Run {
+                timeout,
+                session_id,
+                wrapped,
+            }) => run::run(timeout, session_id, wrapped),
+            None => {
+                eprintln!("holt: no subcommand. Try `holt --help` or `holt --self-bench`.");
+                2
+            }
+        }
+    };
+
+    std::process::exit(exit_code);
 }

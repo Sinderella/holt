@@ -15,6 +15,35 @@ rust-version = "1.87"
 license = "MIT"
 repository = "https://github.com/Sinderella/holt"
 
+# ------------------------------------------------------------------
+# Workspace-root package (D-15).
+#
+# The root is BOTH a virtual workspace AND a tiny package whose only purpose
+# is hosting workspace-level integration tests like `tests/architecture_dag.rs`
+# that walk `cargo metadata` to enforce cross-crate invariants (C2). The
+# package itself ships no library/binary code and is excluded from any release
+# artifact via `publish = false`.
+# ------------------------------------------------------------------
+[package]
+name = "holt-workspace-tests"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+# Empty default-run set: there is no [[bin]] / [lib] target, only [[test]]s.
+autobins = false
+autoexamples = false
+autobenches = false
+autotests = true
+
+[[test]]
+name = "architecture_dag"
+path = "tests/architecture_dag.rs"
+
+[dev-dependencies]
+serde_json.workspace = true
+
 [workspace.dependencies]
 # Pinned exactly per CONTEXT.md / RESEARCH.md / CLAUDE.md.
 process-wrap = { version = "=9.1.0", features = ["std", "process-group"] }
