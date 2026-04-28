@@ -1,0 +1,11 @@
+[package]
+name = "holt-render"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+holt-schemas = { path = "../holt-schemas" }
+holt-orchestrator = { path = "../holt-orchestrator" }
+# NOTE: adding holt-supervisor here MUST fail tests/architecture_dag.rs (D-15). Don't.

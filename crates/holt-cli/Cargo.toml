@@ -1,0 +1,17 @@
+[package]
+name = "holt-cli"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "holt"
+path = "src/main.rs"
+
+[dependencies]
+holt-schemas = { path = "../holt-schemas" }
+holt-supervisor = { path = "../holt-supervisor" }
+holt-render = { path = "../holt-render" }
+holt-orchestrator = { path = "../holt-orchestrator" }
+holt-hooks = { path = "../holt-hooks" }
