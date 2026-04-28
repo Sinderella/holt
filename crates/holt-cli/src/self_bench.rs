@@ -9,7 +9,7 @@ use std::time::Instant;
 
 use serde::Serialize;
 
-use holt_supervisor::{SupervisorOptions, paths::default_cache_root, wrap_and_run};
+use holt_supervisor::{SupervisorOptions, wrap_and_run};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BenchResult {
@@ -24,13 +24,30 @@ pub struct BenchResult {
 pub fn run_self_bench(iterations: u32) -> BenchResult {
     let mut samples_us: Vec<u64> = Vec::with_capacity(iterations as usize);
 
+    // WR-10 note: `:` (POSIX no-op, `cmd /c exit 0` on Windows) is chosen
+    // SPECIFICALLY because it does not read stdin. This used to mask CR-03
+    // (the supervisor leaving child stdin open); CR-03 is now fixed, but
+    // swapping in a stdin-reading bench command without re-checking is still
+    // a foot-gun — the bench's measured workload is supposed to be
+    // process-creation overhead, not stdin handling.
     let (program, args): (&str, &[&str]) = if cfg!(windows) {
         ("cmd", &["/c", "exit 0"])
     } else {
         ("sh", &["-c", ":"])
     };
 
-    let cache_root = default_cache_root();
+    // WR-05: bench against an isolated tempdir so we never write
+    // session_id="self-bench" entries into the user's real ~/.cache/holt/
+    // telemetry stream. CI invokes --self-bench on every push; without a
+    // tempdir, holt doctor (v0.5) would have to filter synthetic samples out
+    // of the live data forever. If the tempdir create fails (extremely rare),
+    // fall back to a process-id-tagged subdir under std::env::temp_dir() so
+    // we still don't touch the user's cache.
+    let _bench_tmp = tempfile::tempdir().ok();
+    let cache_root = match &_bench_tmp {
+        Some(t) => t.path().to_path_buf(),
+        None => std::env::temp_dir().join(format!("holt-self-bench-{}", std::process::id())),
+    };
 
     for _ in 0..iterations {
         let opts = SupervisorOptions {
