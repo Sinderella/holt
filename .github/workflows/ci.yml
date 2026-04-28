@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  lint:
+    name: fmt + clippy (MSRV 1.87, Linux x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test-linux:
+    name: test (MSRV 1.87, x86_64-unknown-linux-gnu) — REQUIRED
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - uses: Swatinem/rust-cache@v2
+      - name: install strace
+        run: sudo apt-get update && sudo apt-get install -y strace procps
+      - run: cargo build --workspace --release
+      - run: cargo test --workspace
+      - run: cargo test --test architecture_dag
+      - name: self-bench gate
+        run: ./target/release/holt --self-bench --json --iterations 30 | tee /tmp/bench.json
+      - name: assert self-bench PASS
+        run: |
+          python3 -c "import json,sys; d=json.load(open('/tmp/bench.json')); sys.exit(0 if d['passed'] else 1)"
+
+  test-macos:
+    name: test (MSRV 1.87, aarch64-apple-darwin) — REQUIRED
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --release
+      - run: cargo test --workspace
+      - run: cargo test --test architecture_dag
+      - name: self-bench gate
+        run: ./target/release/holt --self-bench --json --iterations 30 | tee /tmp/bench.json
+      - name: assert self-bench PASS
+        run: |
+          python3 -c "import json,sys; d=json.load(open('/tmp/bench.json')); sys.exit(0 if d['passed'] else 1)"
+
+  test-windows:
+    name: test (Windows x86_64) — best-effort (allowed-failure)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --release
+      - run: cargo test --workspace
+      - run: cargo test --test architecture_dag
+
+  stable-linux:
+    name: test (stable, Linux x86_64) — informational
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+
+  stable-macos:
+    name: test (stable, macOS arm64) — informational
+    runs-on: macos-14
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
