@@ -7,14 +7,27 @@
 use std::path::{Path, PathBuf};
 
 /// `~/.cache/holt/` (or `$XDG_CACHE_HOME/holt` if set + non-empty).
+///
+/// WR-01: when both `XDG_CACHE_HOME` and `HOME` are unset/empty (rare but real
+/// — minimal Docker images, FreeBSD jails, some sandbox profiles), we fall
+/// back to a per-uid subdirectory of the system temp dir rather than the
+/// current working directory. Falling back to "." would silently pollute the
+/// repo a CC session was started in with `holt/breaches.log` and friends.
+/// Windows path of last resort honors `USERPROFILE` before the temp fallback.
 pub fn default_cache_root() -> PathBuf {
     if let Ok(xdg) = std::env::var("XDG_CACHE_HOME") {
         if !xdg.is_empty() {
             return PathBuf::from(xdg).join("holt");
         }
     }
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".cache").join("holt")
+    let home = std::env::var("HOME")
+        .ok()
+        .or_else(|| std::env::var("USERPROFILE").ok())
+        .filter(|h| !h.is_empty());
+    match home {
+        Some(h) => PathBuf::from(h).join(".cache").join("holt"),
+        None => std::env::temp_dir().join(format!("holt-{}", std::process::id())),
+    }
 }
 
 /// `<cache_root>/lkg/<session_id>.json` — D-10 file layout.
