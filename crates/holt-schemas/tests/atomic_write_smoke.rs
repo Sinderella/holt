@@ -70,3 +70,42 @@ fn errors_on_invalid_target_no_parent() {
     let result = atomic_write(std::path::Path::new(""), b"x");
     assert!(result.is_err(), "expected error for empty path");
 }
+
+/// CR-05 regression: when the inner write/fsync/rename pipeline fails, the
+/// tmp file must be cleaned up so the next call's `create_new(true)` does
+/// not hit EEXIST and poison subsequent writes. We simulate a failure by
+/// pointing the target into a *read-only* parent directory: `OpenOptions::open`
+/// for the tmp file will then return PermissionDenied, the cleanup branch
+/// runs, and there must be zero `*.holt-tmp.*` entries afterwards.
+#[cfg(unix)]
+#[test]
+fn no_orphan_tmp_when_inner_pipeline_errors() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = tempdir().unwrap();
+    let ro_parent = dir.path().join("ro");
+    fs::create_dir(&ro_parent).unwrap();
+    // Drop write/exec on the parent — file creation inside it will fail.
+    fs::set_permissions(&ro_parent, fs::Permissions::from_mode(0o500)).unwrap();
+
+    let target = ro_parent.join("payload.json");
+    let result = atomic_write(&target, b"x");
+
+    // Restore perms before any assertion so a failed assert can still be
+    // cleaned up by tempdir's Drop.
+    fs::set_permissions(&ro_parent, fs::Permissions::from_mode(0o755)).unwrap();
+
+    assert!(result.is_err(), "expected error from atomic_write into read-only dir");
+
+    let entries: Vec<String> = fs::read_dir(&ro_parent)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect();
+    for name in &entries {
+        assert!(
+            !name.contains(".holt-tmp."),
+            "orphan tmp file left behind after failed write: {name} (CR-05)"
+        );
+    }
+}

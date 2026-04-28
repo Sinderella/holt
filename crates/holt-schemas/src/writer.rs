@@ -38,19 +38,25 @@ pub fn atomic_write(path: &Path, contents: &[u8]) -> io::Result<()> {
         opts.mode(0o600);
     }
 
-    let mut f = opts.open(&tmp)?;
-    f.write_all(contents)?;
-    f.sync_all()?; // fsync(2) BEFORE rename — closes ext4 delayed-alloc window
-    drop(f);
-
-    // If rename fails, clean up the orphan tmp so the next call's create_new(true) doesn't ESTALE.
-    if let Err(e) = fs::rename(&tmp, path) {
+    // CR-05: clean up the tmp file on EVERY error path, not just rename
+    // failure. If write_all/sync_all errored out (EIO, ENOSPC, EAGAIN under
+    // load), the tmp file would otherwise linger and the next call from the
+    // same PID would hit EEXIST on `create_new(true)` and stay broken until
+    // the user manually cleared `*.holt-tmp.<pid>`. The closure isolates the
+    // fallible steps so the cleanup runs unconditionally on `Err`.
+    let result = (|| -> io::Result<()> {
+        let mut f = opts.open(&tmp)?;
+        f.write_all(contents)?;
+        f.sync_all()?; // fsync(2) BEFORE rename — closes ext4 delayed-alloc window
+        drop(f);
+        fs::rename(&tmp, path)
+    })();
+    if result.is_err() {
         let _ = fs::remove_file(&tmp);
-        return Err(e);
     }
 
     // (We deliberately do NOT fsync the directory at v0.1. Heartbeat / LKG are ephemeral;
     // a power-loss between rename and dirent flush is recoverable next fire.
     // Trigger to add directory fsync: ≥1 corrupted-on-power-loss report.)
-    Ok(())
+    result
 }
