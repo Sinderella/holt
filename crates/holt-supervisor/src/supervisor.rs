@@ -199,6 +199,16 @@ pub fn wrap_and_run(program: &str, args: &[&str], opts: SupervisorOptions) -> Su
             // linger briefly. Trigger to harden: ≥1 Windows-tagged "leftover
             // process" report.
 
+            // WR-07: also join the stdout thread on the timeout branch. The
+            // captured stdout is irrelevant on a Breach (we won't return it),
+            // but joining ensures the thread terminates and its buffer is
+            // freed before wrap_and_run returns. Without the join the
+            // JoinHandle is dropped (the OS thread detaches) and continues
+            // running until read_to_end on the closed stdout pipe finishes
+            // — accumulating live threads + Vec<u8> buffers in long-running
+            // CC sessions that hit hundreds of timeouts.
+            let _ = stdout_thread.and_then(|t| t.join().ok());
+
             // Drain whatever made it through before the kill (best-effort).
             let stderr_bytes = stderr_thread
                 .and_then(|t| t.join().ok())
