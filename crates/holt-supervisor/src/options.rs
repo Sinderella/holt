@@ -75,12 +75,18 @@ pub enum SupervisorOutcome {
 /// Why a supervised invocation breached.
 ///
 /// `ParseFail` is reserved for the CLI-side stdin parser (CORE-08); the
-/// supervisor itself only emits `Timeout` and `SpawnFail`.
+/// supervisor itself only emits `Timeout` and `SpawnFail`. `Unwritable` is
+/// emitted by `holt-hooks` (Phase 2) when all three D-06 fallback tiers fail.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BreachKind {
     Timeout,
     ParseFail,
     SpawnFail,
+    /// Hook write failed at all three D-06 tiers — the heartbeat could not be
+    /// written and the failure is recorded in `breaches.log` (D-06 tier 4) if
+    /// THAT is writable; otherwise the hook exits 0 silently. Phase 2 hooks
+    /// emit this; the supervisor itself never does.
+    Unwritable,
 }
 
 impl BreachKind {
@@ -90,6 +96,7 @@ impl BreachKind {
             BreachKind::Timeout => "timeout",
             BreachKind::ParseFail => "parse_fail",
             BreachKind::SpawnFail => "spawn_fail",
+            BreachKind::Unwritable => "unwritable",
         }
     }
 }
