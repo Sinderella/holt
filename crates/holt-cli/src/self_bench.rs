@@ -69,9 +69,25 @@ pub fn run_self_bench(iterations: u32) -> BenchResult {
     }
 
     samples_us.sort_unstable();
+    // WR-06: linear-interpolation percentile (not nearest-integer round). With
+    // the previous `((len-1)*frac).round()` formula and len=10, both p95 and
+    // p99 collapsed to index 9 (the maximum), so the CI gate "p95 ≤ 20_000us"
+    // was effectively "max-of-10 ≤ 20_000us" — much more sensitive to outliers
+    // than a real p95. Linear interpolation between adjacent indices gives a
+    // meaningful percentile even on small N. Saturating ops avoid panics on
+    // empty samples_us (defensive — len is iterations.max(10) ≥ 10 in practice).
     let pick = |frac: f64| -> u64 {
-        let idx = ((samples_us.len() as f64 - 1.0) * frac).round() as usize;
-        samples_us[idx.min(samples_us.len() - 1)]
+        let n = samples_us.len();
+        if n == 0 {
+            return 0;
+        }
+        let pos = (n as f64 - 1.0) * frac;
+        let lo = pos.floor() as usize;
+        let hi = (lo + 1).min(n - 1);
+        let weight = pos - (lo as f64);
+        let lo_v = samples_us[lo] as f64;
+        let hi_v = samples_us[hi] as f64;
+        (lo_v + (hi_v - lo_v) * weight).round() as u64
     };
 
     let budget_p95_us: u64 = if cfg!(windows) { 40_000 } else { 20_000 };
