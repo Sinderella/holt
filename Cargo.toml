@@ -1,0 +1,37 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/holt-schemas",
+    "crates/holt-supervisor",
+    "crates/holt-hooks",
+    "crates/holt-orchestrator",
+    "crates/holt-render",
+    "crates/holt-cli",
+]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.87"
+license = "MIT"
+repository = "https://github.com/Sinderella/holt"
+
+[workspace.dependencies]
+# Pinned exactly per CONTEXT.md / RESEARCH.md / CLAUDE.md.
+process-wrap = "=9.1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+jiff = "0.2"
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1"
+thiserror = "1"
+humantime = "2.3"
+nix = { version = "0.27", features = ["signal"] }
+# dev-only:
+tempfile = "3"
+
+[profile.release]
+# D-04: required to hit sub-20ms cold-start budget on macOS arm64 / Linux x86_64.
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
