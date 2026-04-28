@@ -35,10 +35,15 @@ pub fn run(timeout: Option<String>, session_id: Option<String>, wrapped: Vec<Str
     let session_id = session_id.unwrap_or_else(|| "default".to_string());
 
     // Step 1: defensive CC stdin parse (CORE-08).
+    //
+    // CR-02: we VALIDATE that CC stdin is JSON (so we can record a parse_fail
+    // breach if it isn't), but we forward the ORIGINAL bytes to the wrapped
+    // script — never `Value::to_string()`, which would re-format numbers and
+    // (pre-`preserve_order`) re-order keys.
     let stdin_outcome = slurp_and_parse();
-    let stdin_bytes = match &stdin_outcome {
-        StdinParseOutcome::Ok(v) => v.to_string().into_bytes(),
-        StdinParseOutcome::ParseFail { excerpt } => {
+    let stdin_bytes = match stdin_outcome {
+        StdinParseOutcome::Ok { raw, .. } => raw,
+        StdinParseOutcome::ParseFail { excerpt, .. } => {
             // Record parse_fail breach and fall through to LKG (or empty).
             let _ = append_breach(
                 &cache_root,
