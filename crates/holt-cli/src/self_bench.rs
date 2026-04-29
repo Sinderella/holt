@@ -172,6 +172,16 @@ pub fn run_self_bench_hook(event: HookEvent, iterations: u32) -> BenchResult {
             };
         }
     };
+    // WR-04: capture pre-bench env so we can restore on the way out. The
+    // tempdir is dropped (and deleted) when this function returns; if we
+    // leave XDG_RUNTIME_DIR pointing at the deleted path, any future
+    // in-process consumer added after the bench hits a stale env. There is
+    // no in-process consumer today (the binary exits microseconds later),
+    // but the pattern of 'set unsafe global env, drop tempdir, leave env
+    // stale' is a footgun worth closing now. Mirrors the prev/restore
+    // pattern used in `crates/holt-hooks/tests/handle_event_smoke.rs`.
+    let prev_xdg = std::env::var_os("XDG_RUNTIME_DIR");
+    let prev_tmpdir = std::env::var_os("TMPDIR");
     // SAFETY: bench harness runs single-threaded inside main(); we set the
     // env var for our own process before each handle_event call. set_var is
     // unsafe in Rust 2024; we accept that tradeoff because (a) the bench is
@@ -219,6 +229,21 @@ pub fn run_self_bench_hook(event: HookEvent, iterations: u32) -> BenchResult {
     };
 
     let p95 = pick(0.95);
+
+    // WR-04: restore the pre-bench env so we don't leave XDG_RUNTIME_DIR
+    // pointing at the tempdir we are about to drop, and we don't lose a
+    // previously-set TMPDIR. SAFETY: same as the set_var above — this
+    // bench is invoked single-threaded from main().
+    unsafe {
+        match prev_xdg {
+            Some(v) => std::env::set_var("XDG_RUNTIME_DIR", v),
+            None => std::env::remove_var("XDG_RUNTIME_DIR"),
+        }
+        match prev_tmpdir {
+            Some(v) => std::env::set_var("TMPDIR", v),
+            None => std::env::remove_var("TMPDIR"),
+        }
+    }
 
     BenchResult {
         iterations,
