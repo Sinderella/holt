@@ -29,6 +29,14 @@ hard_constraints_in_scope:
 
 # Phase 4 — Distribution + launch
 
+> ⚠️ **AMENDMENT 2026-04-29: Homebrew tap dropped from v0.1, deferred to v0.1.x.**
+>
+> The body of this document still discusses D-04 (Homebrew tap = `Sinderella/homebrew-holt`) and references `brew install Sinderella/holt` in D-04, D-15, and the ROADMAP success-criteria mapping for criterion #2. **Those are superseded.** v0.1 distribution is now `cargo binstall holt` + prebuilt GitHub-release tarballs only. macOS users get a documented `xattr -d com.apple.quarantine /usr/local/bin/holt` post-install workaround. DIST-02 is marked deferred in `.planning/REQUIREMENTS.md`.
+>
+> Re-add path: drop the `homebrew` installer back into `dist-workspace.toml` + restore `tap`/`formula`/`publish-jobs` keys + `dist generate --mode ci` + re-apply Windows continue-on-error hand-edit. Trigger criteria for revisiting: ≥3 issues filed reporting macOS Gatekeeper friction OR Apple Developer Program enrollment ($99/yr) becomes worthwhile for native notarization.
+>
+> The rest of D-01..D-16 stand unchanged — only the Homebrew-specific sub-decisions and install-command examples are affected.
+
 ## Phase goal (from ROADMAP.md)
 
 A user can `brew install <user>/tap/holt` (macOS), `cargo binstall holt` (any platform with the toolchain), or download a prebuilt binary from a GitHub release for Linux x64 / macOS x64+arm64 / Windows x64, follow a three-line README, and watch a sub-ten-second asciinema/gif of the shim wrapping a slow statusLine — with the repo's `CONTRIBUTING.md` already routing the issue traffic the launch will produce.
