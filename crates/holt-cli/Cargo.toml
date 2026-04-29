@@ -5,6 +5,14 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
+# D-02 / plan-check I-1: holt-cli is the only published-binary crate, but at
+# v0.1 we ship via dist artifacts (Homebrew tap + binstall + GitHub Release
+# direct download), NOT crates.io. Publishing to crates.io would also force
+# every internal library dep (holt-schemas, holt-supervisor, holt-hooks,
+# holt-orchestrator, holt-render) to be cargo-publishable too — those are
+# `#[non_exhaustive]` and not API-stable yet. Deferred to v0.5+ per
+# 04-CONTEXT.md "Open questions deferred to v0.1.x or v0.5".
+publish = false
 
 [[bin]]
 name = "holt"
