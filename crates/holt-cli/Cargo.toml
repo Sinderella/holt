@@ -23,11 +23,12 @@ serde_json.workspace = true
 # Phase 2 D-14: ISO 8601 timestamp for `Env.now_iso` plumbed into
 # `holt_hooks::handle_event` from the `holt hook <event>` dispatcher.
 jiff.workspace = true
-# WR-05: --self-bench needs an isolated cache root so it does not pollute the
-# user's real ~/.cache/holt/ telemetry stream. tempfile is on the runtime path
-# but only used by the bench harness; --self-bench is an opt-in CLI mode, not
-# the render path.
-tempfile.workspace = true
+# WR-08: tempfile was previously a runtime dependency for the
+# --self-bench / --self-bench-hook harnesses. It is now hand-rolled in
+# crates/holt-cli/src/self_bench.rs::BenchScratchDir so the release binary
+# does not pull cfg-if/fastrand/libc in for an opt-in CLI mode that no end
+# user invokes. tempfile remains in dev-dependencies for the integration
+# tests below.
 
 [dev-dependencies]
 tempfile.workspace = true

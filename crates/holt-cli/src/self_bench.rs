@@ -5,11 +5,50 @@
 //! cold-start is a follow-up CI script that wraps `time target/release/holt --self-bench`
 //! externally — see RESEARCH §"Pattern 8 Important nuance".
 
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use serde::Serialize;
 
 use holt_supervisor::{SupervisorOptions, wrap_and_run};
+
+/// WR-08: hand-rolled scratch directory for the self-bench harnesses,
+/// replacing the runtime dependency on `tempfile`. Drops the directory on
+/// function exit (best-effort `remove_dir_all`) so the bench leaves no
+/// trace under `std::env::temp_dir()`. The path is PID-tagged by the
+/// caller, so concurrent bench invocations from different processes never
+/// collide.
+struct BenchScratchDir {
+    path: PathBuf,
+}
+
+impl BenchScratchDir {
+    /// Try to (re-)create `path` empty. If the directory already exists
+    /// (e.g., a previous bench run was killed before its drop ran), wipe
+    /// and recreate. Returns `None` on any I/O failure — callers fall back
+    /// to a degraded mode.
+    fn create(path: &Path) -> Option<Self> {
+        // Best-effort wipe of any prior run's leftovers. If this fails
+        // because the path doesn't exist, that's fine.
+        let _ = std::fs::remove_dir_all(path);
+        std::fs::create_dir_all(path).ok()?;
+        Some(Self {
+            path: path.to_path_buf(),
+        })
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for BenchScratchDir {
+    fn drop(&mut self) {
+        // Best-effort cleanup: leaving a stale dir under temp_dir() is
+        // acceptable (the OS reaps temp on reboot), so swallow errors.
+        let _ = std::fs::remove_dir_all(&self.path);
+    }
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BenchResult {
@@ -39,15 +78,17 @@ pub fn run_self_bench(iterations: u32) -> BenchResult {
     // WR-05: bench against an isolated tempdir so we never write
     // session_id="self-bench" entries into the user's real ~/.cache/holt/
     // telemetry stream. CI invokes --self-bench on every push; without a
-    // tempdir, holt doctor (v0.5) would have to filter synthetic samples out
-    // of the live data forever. If the tempdir create fails (extremely rare),
-    // fall back to a process-id-tagged subdir under std::env::temp_dir() so
-    // we still don't touch the user's cache.
-    let _bench_tmp = tempfile::tempdir().ok();
-    let cache_root = match &_bench_tmp {
-        Some(t) => t.path().to_path_buf(),
-        None => std::env::temp_dir().join(format!("holt-self-bench-{}", std::process::id())),
-    };
+    // tempdir, holt doctor (v0.5) would have to filter synthetic samples
+    // out of the live data forever.
+    //
+    // WR-08: hand-rolled tempdir (PID-tagged subdir under
+    // std::env::temp_dir()) instead of `tempfile::tempdir()`. tempfile
+    // pulls cfg-if/fastrand/libc into every release binary for an opt-in
+    // CLI mode that no end user ever invokes outside CI. The PID tag gives
+    // us per-process isolation; cleanup is best-effort via the
+    // BenchScratchDir RAII guard at function exit.
+    let cache_root = std::env::temp_dir().join(format!("holt-self-bench-{}", std::process::id()));
+    let _bench_tmp_keepalive = BenchScratchDir::create(&cache_root);
 
     for _ in 0..iterations {
         let opts = SupervisorOptions {
@@ -159,9 +200,13 @@ pub fn run_self_bench_hook(event: HookEvent, iterations: u32) -> BenchResult {
     let iterations = iterations.max(10);
     let budget_p95_us: u64 = if cfg!(windows) { 40_000 } else { 20_000 };
 
-    let xdg_dir = match tempfile::tempdir() {
-        Ok(d) => d,
-        Err(_) => {
+    // WR-08: hand-rolled tempdir to keep tempfile out of the release
+    // binary. Same pattern as run_self_bench above.
+    let xdg_root =
+        std::env::temp_dir().join(format!("holt-self-bench-hook-{}", std::process::id()));
+    let xdg_dir = match BenchScratchDir::create(&xdg_root) {
+        Some(d) => d,
+        None => {
             return BenchResult {
                 iterations: 0,
                 overhead_p50_us: u64::MAX,
