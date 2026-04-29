@@ -50,6 +50,33 @@ fn cwd_label_falls_back_to_basename_when_workspace_absent() {
 }
 
 #[test]
+fn cwd_label_falls_back_to_unknown_when_cwd_empty_and_no_workspace() {
+    // WR-05: must_have-5 invariant says cwd_label is never empty. A
+    // Notification or SessionStart event with cwd="" and no
+    // workspace.git_worktree must NOT silently produce an empty label.
+    let stdin = HookStdin {
+        session_id: "test-empty-cwd".into(),
+        cwd: String::new(),
+        transcript_path: String::new(),
+        hook_event_name: "Notification".into(),
+        tool_name: None,
+        workspace: holt_hooks::stdin::HookWorkspace::default(),
+        model: holt_hooks::stdin::HookModel::default(),
+        last_assistant_at: None,
+        permission_mode: None,
+    };
+    let hb = assemble_heartbeat(HookEvent::Notification, &stdin, &env());
+    assert!(
+        !hb.cwd_label.is_empty(),
+        "must_have-5: cwd_label MUST be non-empty even with cwd='' and no workspace"
+    );
+    assert_eq!(
+        hb.cwd_label, "<unknown>",
+        "WR-05: empty cwd + no workspace falls back to literal '<unknown>'"
+    );
+}
+
+#[test]
 fn current_tool_is_some_on_pretooluse() {
     let stdin = fixture_v2119_pretooluse();
     let hb = assemble_heartbeat(HookEvent::PreToolUse, &stdin, &env());

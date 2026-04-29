@@ -75,7 +75,8 @@ pub fn assemble_heartbeat(event: HookEvent, stdin: &HookStdin, env: &Env) -> Hea
 /// D-08 cwd_label derivation:
 /// 1. If `workspace.git_worktree` is `Some(non_empty)`, use it verbatim.
 /// 2. Else use the basename of `cwd` if it has one (handles `/` edge case).
-/// 3. Else fall back to `cwd` itself (covers empty-string / current-dir cases).
+/// 3. Else fall back to `cwd` itself (covers single-segment / current-dir cases).
+/// 4. Else `"<unknown>"` (must_have-5 invariant: cwd_label is never empty).
 ///
 /// Note on D-08 simplification: the CONTEXT.md branch 2 mentions a `git
 /// rev-parse` heuristic for `<repo>/<branch>` derivation when cwd contains
@@ -85,8 +86,16 @@ pub fn assemble_heartbeat(event: HookEvent, stdin: &HookStdin, env: &Env) -> Hea
 /// The git-rev-parse branch becomes a v1.0 enhancement when the orchestrator
 /// can call it on a non-render-path background thread.
 ///
+/// WR-05: the final `<unknown>` fallback closes the case where CC ever
+/// sends a stdin with `cwd: ""` and no `workspace.git_worktree` (e.g., a
+/// Notification event with no meaningful cwd). Without this, the function
+/// returned an empty string and silently violated must_have-5
+/// ('cwd_label non-empty'). The literal `<unknown>` is bracket-flagged so
+/// it never collides with a legitimate cwd basename.
+///
 /// Exposed as `pub` for unit testing — the integration test in
-/// `tests/assemble_field_policy.rs` exercises both branches via paired fixtures.
+/// `tests/assemble_field_policy.rs` exercises every branch including the
+/// empty-cwd fallback (`cwd_label_falls_back_to_unknown_when_cwd_empty`).
 pub fn derive_cwd_label(git_worktree: &Option<String>, cwd: &str) -> String {
     if let Some(label) = git_worktree {
         if !label.is_empty() {
@@ -98,5 +107,9 @@ pub fn derive_cwd_label(git_worktree: &Option<String>, cwd: &str) -> String {
             return base.to_string();
         }
     }
-    cwd.to_string()
+    if !cwd.is_empty() {
+        return cwd.to_string();
+    }
+    // WR-05: must_have-5 invariant — cwd_label is never empty.
+    "<unknown>".to_string()
 }
