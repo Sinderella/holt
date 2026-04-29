@@ -8,13 +8,19 @@ A small Rust statusLine for Claude Code — `holt` — that wraps the user's exi
 
 **Make Claude Code's statusLine never silently fail, never block input, and tell the user — through Nak — exactly what each of their sessions is doing.** If everything else fails, the shim must wrap a user's existing statusLine without making it worse, and the doctor must be able to find the slow segment in someone's config in under 30 seconds.
 
+## Current State
+
+**Shipped: v0.1 — Runtime hygiene wedge** (2026-04-29). Single-binary `holt` that wraps the user's `statusLine.command`, supervises it with `process-wrap` under a sub-20ms cold-start budget, writes per-session heartbeats via Claude Code hooks, merges into `~/.claude/settings.json` JSONC-tolerant + atomically, and ships via `cargo binstall` + dist-published GitHub-release tarballs (Linux x64, macOS x64+arm64, Windows x64 best-effort). 80/80 workspace tests, all 6 hard constraints C1..C6 test-enforced. See [`.planning/milestones/v0.1-ROADMAP.md`](.planning/milestones/v0.1-ROADMAP.md) and [`.planning/milestones/v0.1-REQUIREMENTS.md`](.planning/milestones/v0.1-REQUIREMENTS.md) for the full archive.
+
+**Next milestone: v0.5 — `holt doctor`** (load-tester + culprit table). Not yet planned; run `/gsd-new-milestone` to define scope, requirements, and roadmap.
+
 ## Requirements
 
 ### Validated
 
-<!-- Shipped and confirmed valuable. -->
+<!-- Shipped and confirmed valuable. v0.1 ships 2026-04-29 with 27/28 satisfied + 1 deferred to v0.1.x. -->
 
-(None yet — ship to validate)
+**v0.1 (shipped 2026-04-29):** 27/28 requirements satisfied; DIST-02 (Homebrew tap) deferred to v0.1.x per AMENDMENT 2026-04-29. Full state: [`.planning/milestones/v0.1-REQUIREMENTS.md`](.planning/milestones/v0.1-REQUIREMENTS.md).
 
 ### Active
 
