@@ -218,10 +218,15 @@ jobs:
           set -euo pipefail
           # Locate the freshly-built binary. dist 0.31 stages the binary under
           # target/<triple>/release/ (or target/release/ for the host triple).
-          # Search broadly because the matrix instance has a single target only.
-          BIN=$(find target -type f \( -name 'holt' -o -name 'holt.exe' \) -perm -u+x 2>/dev/null | head -1)
+          # Restrict the find to the canonical release path (and explicitly to
+          # the holt or holt.exe basename) so we don't pick up a build artifact
+          # from a debug profile or an unrelated subdir if the build layout
+          # ever changes — WR-03 robustness fix.
+          BIN=$(find target -type f \
+                  \( -path '*/release/holt' -o -path '*/release/holt.exe' \) \
+                  -perm -u+x 2>/dev/null | head -1)
           if [ -z "$BIN" ]; then
-            echo "FAIL: could not locate built holt binary under target/"
+            echo "FAIL: could not locate built holt binary under target/*/release/ or target/release/"
             find target -maxdepth 4 -type f -name 'holt*' 2>/dev/null || true
             exit 1
           fi
