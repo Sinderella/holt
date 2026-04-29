@@ -2,39 +2,42 @@
 
 **Project:** holt — Rust statusLine for Claude Code with multi-session orchestration and an ASCII otter pet (Nak)
 **Milestone:** v0.1 — Runtime hygiene wedge (the lovable MVP, target 3–4 weekends)
-**Last updated:** 2026-04-28 (Phase 3 complete)
+**Last updated:** 2026-04-29 (Phase 4 complete; v0.1 milestone codebase work done)
 
 ## Project Reference
 
 **Core Value:** Make Claude Code's statusLine never silently fail, never block input, and tell the user — through Nak — exactly what each of their sessions is doing.
 
-**Current focus:** Phase 4 ready to plan. Distribution + launch — `dist` v0.31.0 scaffold (Linux x64, macOS x64+arm64, Windows x64 best-effort), Homebrew tap, `cargo binstall` metadata, README with asciinema/gif demo, CONTRIBUTING.md issue labels.
+**Current focus:** Phase 4 codebase work complete. Milestone v0.1 ready for audit + complete + cleanup. Three maintainer-side handoff items remain (per `RC1-CHECKLIST.md`): `gh repo create Sinderella/holt`, `tools/setup-labels.sh` apply, and the `v0.1.0-rc.1` tag-push that triggers the dist release workflow.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 4 — Distribution + launch |
-| Plan | (none — phase not yet planned) |
-| Status | Phase 3 complete (verified passed; 6/6 critical+warning review findings fixed; 5 info deferred); awaiting `/gsd-plan-phase 4` |
-| Progress | 3 / 4 phases complete |
+| Phase | 4 — Distribution + launch (COMPLETE) |
+| Plan | both 04-01 and 04-02 landed |
+| Status | Phase 4 complete (verifier PARTIAL — gaps are maintainer-only rc.1 tag-push items; reviewer PASS-WITH-WARNINGS; 3/4 fixed, 1 deferred); ready for milestone audit/complete/cleanup |
+| Progress | **4 / 4 phases complete** |
 
 ```
 [x] Phase 1: Schema + supervisor substrate    ✓ 2026-04-28 (verified passed; 28/28 tests; review-fix all critical+warning)
 [x] Phase 2: Heartbeat hook (write side)      ✓ 2026-04-28 (verified passed; 51/51 tests; review-fix 11/11 critical+warning)
 [x] Phase 3: install-hooks UX                 ✓ 2026-04-28 (verified passed; 80/80 tests; review-fix 6/6 critical+warning; all 6 hard constraints C1..C6 enforced)
-[ ] Phase 4: Distribution + launch            ← NEXT — `dist init` open question (don't copy STACK.md snippet wholesale)
+[x] Phase 4: Distribution + launch            ✓ 2026-04-29 (verified PARTIAL — codebase complete; 3 maintainer rc.1 tag-push items deferred to RC1-CHECKLIST.md; review-fix 3/4 warnings, 1 deferred + rationale)
 ```
 
 ## Performance Metrics
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| Phases shipped | 4 | 3 |
-| v1 requirements covered | 28 / 28 | 28 mapped, 21 implemented (CORE-01..10 + HOOK-01..06 + HOOK-07..11) |
-| Cold-start overhead (macOS arm64) | < 20ms | **PASS** — `holt --self-bench` p95=0us; `holt --self-bench-hook PreToolUse` p95=9921us (D-15 hook gate, 2x headroom) |
+| Phases shipped | 4 | **4** |
+| v1 requirements covered | 28 / 28 | **27 implemented + 1 deferred to v0.1.x** (CORE-01..10 + HOOK-01..11 + DIST-01,03..07; DIST-02 Homebrew tap deferred per AMENDMENT 2026-04-29) |
+| Cold-start overhead (macOS arm64) | < 20ms | **PASS** — `holt --self-bench` p95=0us; `holt --self-bench-hook PreToolUse` p95=5874us (D-15 hook gate, 3× headroom) |
 | Cold-start overhead (Linux x86_64) | < 20ms | CI matrix runs both gates on every PR |
 | `holt install-hooks` budget | < 500ms | **PASS** — `--dry-run` p95 within budget; 50× concurrent stress + 200× SIGKILL atomicity green |
+| Workspace test count | n/a | **80/80 green** at HEAD (`d15951e`) |
+| Hard constraints C1..C6 enforced | 6 / 6 | **PASS** — all 6 test-enforced (architecture_dag, cli_dep_boundary, chokepoint_audit, reader_contract, render_path_no_read, install_hooks lock + sigkill) |
+| Distribution stack | dist v0.31.0 + binstall | scaffold + 4-target matrix + `--version` parity check + sha256 sidecars + MSRV 1.87 build matrix; Homebrew tap deferred to v0.1.x |
 
 ## Accumulated Context
 
@@ -59,8 +62,8 @@
 ### Open Questions (from research/SUMMARY.md §5 — resolve at phase-start)
 
 - ~~**Phase 2 start**: JSONC strategy spike.~~ ✓ Resolved in Phase 3 — `jsonc-parser` 0.26.3 CST in-place edit with `is_canonical_entry` byte-equal short-circuit confirmed safe; `json_comments` strip-then-parse not used (single library is sufficient).
-- ~~**Phase 3 start**: Capture verbatim CC v2.1.119+ stdin JSONs.~~ ✓ Resolved in Phase 2 — `crates/holt-hooks/tests/fixtures/cc-stdin/v2.1.119/` corpus (PreToolUse / PostToolUse / Stop / Notification / SessionStart) committed with refresh-procedure README.
-- **Phase 4 start**: Run `dist init` to generate the canonical `dist.toml` / `dist-workspace.toml` scaffold; do not copy STACK.md snippet wholesale (MEDIUM confidence).
+- ~~**Phase 3 start**: Capture verbatim CC v2.1.119+ stdin JSONs.~~ ✓ Resolved in Phase 2 — `crates/holt-hooks/tests/fixtures/cc-stdin/v2.1.119/` corpus committed with refresh-procedure README.
+- ~~**Phase 4 start**: Run `dist init` to generate the canonical scaffold.~~ ✓ Resolved in Phase 4 Plan 04-01 — `dist init --yes` produced `dist-workspace.toml` + `release.yml`; customizations applied as separate atomic commits per D-02..D-04. Re-add path documented in `release.yml` route-finder block.
 
 ### Todos (carried forward across phases)
 
@@ -72,19 +75,17 @@
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-plan-phase 4` to decompose Phase 4 (Distribution + launch) into plans. **Open Question to resolve at Phase 4 start: dist scaffold** — run `dist init` to generate the canonical `dist.toml` / `dist-workspace.toml` rather than copy STACK.md snippet wholesale (MEDIUM confidence per research/SUMMARY.md §5).
+**Next action:** Milestone v0.1 lifecycle — gsd-audit-milestone → gsd-complete-milestone → gsd-cleanup. After lifecycle: maintainer follows `RC1-CHECKLIST.md` (gh repo create → setup-labels.sh apply → tag v0.1.0-rc.1 push → verify release artifacts).
 
 **Files to read on session resume:**
-- `/Users/thanats/projects/holt/.planning/ROADMAP.md` — phase structure + success criteria (Phase 4 detailed)
-- `/Users/thanats/projects/holt/.planning/REQUIREMENTS.md` — v1 REQ-IDs with phase mappings (DIST-01..07 → Phase 4)
-- `/Users/thanats/projects/holt/.planning/PROJECT.md` — north star, constraints, key decisions
-- `/Users/thanats/projects/holt/.planning/research/SUMMARY.md` — drift since 2026-04-28, hard constraints, open questions
-- `/Users/thanats/projects/holt/.planning/research/STACK.md` — distribution stack (`dist` v0.31.0, Homebrew tap config, `cargo binstall` metadata)
-- `/Users/thanats/projects/holt/.planning/phases/03-install-hooks-ux/` — Phase 3 artifacts (CONTEXT, plans, SUMMARYs, VERIFICATION, REVIEW, REVIEW-FIX)
-- `/Users/thanats/projects/holt/Cargo.toml` — workspace manifest, MSRV 1.87, edition 2024
-- `/Users/thanats/projects/holt/.github/workflows/ci.yml` — existing CI matrix that Phase 4 will extend with release workflow
-- `/Users/thanats/projects/holt/docs/02-scope.md` — locked v0.1 IN/OUT
-- `/Users/thanats/projects/holt/docs/05-schemas.md` — heartbeat + pet state v1
+- `/Users/thanats/projects/holt/.planning/phases/04-distribution-launch/RC1-CHECKLIST.md` — maintainer rc.1 tag-push handoff (153 LOC; pre-tag, tag-push, post-tag verification, rollback)
+- `/Users/thanats/projects/holt/.planning/phases/04-distribution-launch/04-VERIFICATION.md` — verifier PARTIAL verdict + 3 maintainer-side handoff items
+- `/Users/thanats/projects/holt/.planning/phases/04-distribution-launch/04-REVIEW-FIX.md` — fix-pass result (3/4 fixed, WR-02 deferred + rationale)
+- `/Users/thanats/projects/holt/.planning/phases/04-distribution-launch/04-CONTEXT.md` — Phase 4 decisions D-01..D-16 (with AMENDMENT BANNER for Homebrew tap deferral)
+- `/Users/thanats/projects/holt/.planning/REQUIREMENTS.md` — final state of all 28 v1 requirements
+- `/Users/thanats/projects/holt/dist-workspace.toml` — distribution config
+- `/Users/thanats/projects/holt/.github/workflows/release.yml` — dist-generated release workflow + hand-edits (Windows continue-on-error, `v*` trigger, D-14 parity check)
+- `/Users/thanats/projects/holt/README.md` — launch README (demo gif + 2-command install + platform tier + first-run + label routing)
 
 ---
 
