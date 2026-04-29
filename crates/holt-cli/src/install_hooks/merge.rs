@@ -46,6 +46,16 @@ pub enum MergeError {
     Parse(String),
     #[error("settings.json root is not a JSON object (got {got})")]
     NotAnObject { got: &'static str },
+    /// WR-02: jsonc-parser CST returned an unexpected shape after we appended
+    /// a fresh `Object(Vec::new())`. Logically unreachable on jsonc-parser
+    /// 0.26.x (the API contract is that appending an Object input produces
+    /// an Object node), but a future minor-version bump could in principle
+    /// change the shape — preferable to surface a clean error than to
+    /// `expect()`-panic mid-install.
+    #[error(
+        "internal: jsonc-parser CST returned an unexpected shape after append. This is a bug — please report it (jsonc-parser 0.26.x contract violated)."
+    )]
+    CstShape,
 }
 
 pub struct MergeOutput {
@@ -77,13 +87,18 @@ pub fn merge_settings(input: &str) -> Result<MergeOutput, MergeError> {
         Some(obj) => obj,
         None => {
             // Append a new `hooks: {}` property AFTER existing keys (preserves key order).
+            // WR-02: route a non-Object shape to a typed error rather than
+            // `expect()`-panicking mid-install. The jsonc-parser 0.26.x API
+            // contract is that `CstInputValue::Object` produces a CST Object
+            // node, so this branch is logically unreachable today; the typed
+            // error future-proofs against minor-version changes that could
+            // alter the shape.
             let prop = root_obj.append("hooks", CstInputValue::Object(Vec::new()));
-            prop.value()
-                .and_then(|v| match v {
-                    CstNode::Container(CstContainerNode::Object(o)) => Some(o),
-                    _ => None,
-                })
-                .expect("just-appended hooks value is an object")
+            let v = prop.value().ok_or(MergeError::CstShape)?;
+            let CstNode::Container(CstContainerNode::Object(o)) = v else {
+                return Err(MergeError::CstShape);
+            };
+            o
         }
     };
 

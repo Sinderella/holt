@@ -115,6 +115,20 @@ pub fn run(dry_run: bool, print: bool) -> i32 {
             drop(lock_handle);
             return 1;
         }
+        Err(MergeError::CstShape) => {
+            // WR-02: jsonc-parser API contract violated (logically unreachable
+            // on 0.26.x). Route to the same clean stderr-with-hint exit that
+            // `MergeError::Parse` uses so the user sees a useful message
+            // instead of an `expect()`-panic abort.
+            eprintln!(
+                "holt install-hooks: internal jsonc-parser CST shape error.\n\
+                 hint: settings.json was not modified. Please file a bug at\n\
+                 https://github.com/Sinderella/holt/issues with the contents of\n\
+                 ~/.claude/settings.json (redact secrets)."
+            );
+            drop(lock_handle);
+            return 1;
+        }
         Err(e) => {
             eprintln!("holt install-hooks: merge: {e}");
             drop(lock_handle);
