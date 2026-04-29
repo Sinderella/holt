@@ -196,6 +196,7 @@ dependencies = [
  "holt-schemas",
  "holt-supervisor",
  "humantime",
+ "jiff",
  "serde",
  "serde_json",
  "tempfile",
@@ -205,7 +206,14 @@ dependencies = [
 name = "holt-hooks"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "holt-schemas",
+ "holt-supervisor",
+ "jiff",
+ "nix 0.27.1",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

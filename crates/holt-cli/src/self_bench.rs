@@ -133,3 +133,99 @@ pub fn print_json(r: &BenchResult) {
         Err(_) => println!("{{}}"),
     }
 }
+
+// PHASE 2 D-15: hook self-bench harness.
+
+use holt_hooks::{Env, HookEvent, handle_event};
+
+/// Hook variant of `run_self_bench`. Calls `holt_hooks::handle_event` ≥10
+/// times against an in-memory minimal stdin envelope, measures the call
+/// duration in microseconds, and reports p50/p95/p99 + PASS/FAIL vs the
+/// 20_000us budget (40_000us on Windows). Same JSON shape as the Phase 1
+/// self-bench so CI consumes both via the same `python3 json.load` step.
+///
+/// We point XDG_RUNTIME_DIR at a tempdir inside this process for the
+/// duration of the bench so the user's real `~/.cache/holt/sessions/` is
+/// never written to. Same pattern as WR-05's tempfile isolation for
+/// `run_self_bench`.
+///
+/// Carries a scoped `#[allow(unsafe_code)]` for `std::env::set_var` /
+/// `remove_var` (Rust 2024 made these unsafe). Safety: the bench is invoked
+/// from `main()` BEFORE any threads spawn; the env mutation is hermetic to
+/// this CLI mode and never observed by another thread. No other code in the
+/// binary uses unsafe (`#![deny(unsafe_code)]` at the crate root).
+#[allow(unsafe_code)]
+pub fn run_self_bench_hook(event: HookEvent, iterations: u32) -> BenchResult {
+    let iterations = iterations.max(10);
+    let budget_p95_us: u64 = if cfg!(windows) { 40_000 } else { 20_000 };
+
+    let xdg_dir = match tempfile::tempdir() {
+        Ok(d) => d,
+        Err(_) => {
+            return BenchResult {
+                iterations: 0,
+                overhead_p50_us: u64::MAX,
+                overhead_p95_us: u64::MAX,
+                overhead_p99_us: u64::MAX,
+                budget_p95_us,
+                passed: false,
+            };
+        }
+    };
+    // SAFETY: bench harness runs single-threaded inside main(); we set the
+    // env var for our own process before each handle_event call. set_var is
+    // unsafe in Rust 2024; we accept that tradeoff because (a) the bench is
+    // an opt-in CLI mode invoked from main() before any threads spawn, and
+    // (b) the alternative (per-call env override) doesn't exist in libstd.
+    unsafe {
+        std::env::set_var("XDG_RUNTIME_DIR", xdg_dir.path());
+        std::env::remove_var("TMPDIR"); // force tier 1 to win
+    }
+
+    // Minimal valid CC stdin envelope. We don't need the full v2.1.119 shape
+    // for the bench — the parse path doesn't care what fields are present
+    // beyond session_id (any non-empty string drops the hash-of-cwd codepath
+    // in path::session_id_or_hash, making timing deterministic).
+    let stdin_bytes = br#"{"session_id":"bench","cwd":"/tmp","tool_name":"Bash"}"#;
+
+    let env = Env {
+        writer_version: env!("CARGO_PKG_VERSION"),
+        pid: std::process::id(),
+        now_iso: "2026-04-28T10:00:00Z".to_string(),
+    };
+
+    let mut samples_us: Vec<u64> = Vec::with_capacity(iterations as usize);
+    for _ in 0..iterations {
+        let t0 = Instant::now();
+        let _ = handle_event(event, stdin_bytes, &env);
+        let elapsed_us = t0.elapsed().as_micros() as u64;
+        samples_us.push(elapsed_us);
+    }
+    samples_us.sort_unstable();
+
+    // WR-06: linear-interpolation percentile (same shape as `run_self_bench`).
+    let pick = |frac: f64| -> u64 {
+        let n = samples_us.len();
+        if n == 0 {
+            return 0;
+        }
+        let pos = (n as f64 - 1.0) * frac;
+        let lo = pos.floor() as usize;
+        let hi = (lo + 1).min(n - 1);
+        let weight = pos - (lo as f64);
+        let lo_v = samples_us[lo] as f64;
+        let hi_v = samples_us[hi] as f64;
+        (lo_v + (hi_v - lo_v) * weight).round() as u64
+    };
+
+    let p95 = pick(0.95);
+
+    BenchResult {
+        iterations,
+        overhead_p50_us: pick(0.50),
+        overhead_p95_us: p95,
+        overhead_p99_us: pick(0.99),
+        budget_p95_us,
+        passed: p95 <= budget_p95_us,
+    }
+}

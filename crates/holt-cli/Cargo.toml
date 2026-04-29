@@ -20,6 +20,9 @@ anyhow.workspace = true
 humantime.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# Phase 2 D-14: ISO 8601 timestamp for `Env.now_iso` plumbed into
+# `holt_hooks::handle_event` from the `holt hook <event>` dispatcher.
+jiff.workspace = true
 # WR-05: --self-bench needs an isolated cache root so it does not pollute the
 # user's real ~/.cache/holt/ telemetry stream. tempfile is on the runtime path
 # but only used by the bench harness; --self-bench is an opt-in CLI mode, not

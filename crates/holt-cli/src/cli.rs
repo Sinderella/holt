@@ -1,10 +1,14 @@
 //! `clap` derive surface for `holt`.
 //!
-//! Locked invariants (PLAN 01-03 `<interfaces>`):
-//!   - top-level `--self-bench`, `--json`, `--iterations` flags
-//!   - `run` subcommand with `--timeout`, `--session-id`, and a trailing wrapped command
+//! Locked invariants:
+//!   - top-level `--self-bench`, `--json`, `--iterations` flags (Phase 1 D-14)
+//!   - top-level `--self-bench-hook <EVENT>` flag (Phase 2 D-15)
+//!   - `run` subcommand with `--timeout`, `--session-id`, trailing wrapped command (Phase 1 D-09)
+//!   - `hook <EVENT>` subcommand (Phase 2 D-14)
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+
+use holt_hooks::HookEvent;
 
 /// holt — Rust statusLine for Claude Code.
 #[derive(Parser, Debug)]
@@ -14,7 +18,13 @@ pub struct Cli {
     #[arg(long)]
     pub self_bench: bool,
 
-    /// Emit machine-readable JSON (only meaningful with --self-bench).
+    /// D-15: Run the hook bench harness ≥10 iterations against the named
+    /// event and print p50/p95/p99 + PASS/FAIL. Same 20ms p95 budget as
+    /// `--self-bench` because hooks fire on the render path.
+    #[arg(long, value_name = "EVENT")]
+    pub self_bench_hook: Option<HookEventArg>,
+
+    /// Emit machine-readable JSON (only meaningful with --self-bench / --self-bench-hook).
     #[arg(long)]
     pub json: bool,
 
@@ -42,4 +52,38 @@ pub enum Command {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         wrapped: Vec<String>,
     },
+    /// Phase 2 D-14: write a heartbeat for the given CC event. Reads CC stdin
+    /// from stdin, ALWAYS exits 0 (never bubbles errors to CC).
+    Hook {
+        /// Which CC hook event fired. Must be one of the five v0.1 subscribed
+        /// events (PreToolUse / PostToolUse / Stop / Notification / SessionStart).
+        /// PreCompact is reserved for v1.0 per docs/02-scope.md.
+        event: HookEventArg,
+    },
+}
+
+/// Clap-side mirror of `holt_hooks::HookEvent` so we can derive `ValueEnum`.
+/// Same five variants in the same order; converted to `HookEvent` via
+/// `HookEventArg::into_lib()`. We can't `derive(ValueEnum)` directly on
+/// `HookEvent` because it lives in another crate.
+#[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "PascalCase")]
+pub enum HookEventArg {
+    PreToolUse,
+    PostToolUse,
+    Stop,
+    Notification,
+    SessionStart,
+}
+
+impl HookEventArg {
+    pub fn into_lib(self) -> HookEvent {
+        match self {
+            HookEventArg::PreToolUse => HookEvent::PreToolUse,
+            HookEventArg::PostToolUse => HookEvent::PostToolUse,
+            HookEventArg::Stop => HookEvent::Stop,
+            HookEventArg::Notification => HookEvent::Notification,
+            HookEventArg::SessionStart => HookEvent::SessionStart,
+        }
+    }
 }
