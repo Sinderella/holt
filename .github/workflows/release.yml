@@ -41,10 +41,17 @@ permissions:
 #   - SHA-256 checksums emitted alongside every artifact (D-12; dist 0.31
 #     default; verified via `dist plan` reporting 4 .sha256 sidecars + 1
 #     sha256.sum aggregate + 1 source.tar.gz.sha256).
-#   - `--version` parity check (D-14) is added in plan 04-02; the smoke test
+#   - Per-target `--version` parity check (D-14): assert the just-built binary's
+#     --version output contains ${GITHUB_REF_NAME#v} for the matrix host. Plan
+#     04-02 added this step; failure fails the release for that target only
+#     (the Windows continue-on-error masking still applies). The smoke test
 #     `crates/holt-cli/tests/version_smoke.rs` (D-13) is the local complement
 #     and has already been replaced to assert against
-#     `concat!("holt ", env!("CARGO_PKG_VERSION"))`.
+#     `concat!("holt ", env!("CARGO_PKG_VERSION"))`. NOTE: this step is also
+#     wiped by `dist generate --mode ci` — re-apply per the same playbook as
+#     the Windows continue-on-error edit (allow-dirty = ["ci"] in
+#     dist-workspace.toml protects the file from being overwritten on
+#     accidental regeneration, but a deliberate regen DOES require re-apply).
 
 # This task will run whenever you push a git tag that looks like a version
 # like "1.0.0", "v0.1.0-prerelease.1", "my-app/0.1.0", "releases/v1.0.0", etc.
@@ -204,6 +211,34 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
           cp dist-manifest.json "$BUILD_MANIFEST_NAME"
+      - name: Verify --version output matches the tag (D-14)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Locate the freshly-built binary. dist 0.31 stages the binary under
+          # target/<triple>/release/ (or target/release/ for the host triple).
+          # Search broadly because the matrix instance has a single target only.
+          BIN=$(find target -type f \( -name 'holt' -o -name 'holt.exe' \) -perm -u+x 2>/dev/null | head -1)
+          if [ -z "$BIN" ]; then
+            echo "FAIL: could not locate built holt binary under target/"
+            find target -maxdepth 4 -type f -name 'holt*' 2>/dev/null || true
+            exit 1
+          fi
+          echo "binary: $BIN"
+          VERSION_OUT="$($BIN --version)"
+          echo "stdout: $VERSION_OUT"
+          # Strip leading 'v' from tag: refs/tags/v0.1.0-rc.1 -> 0.1.0-rc.1.
+          EXPECTED="${GITHUB_REF_NAME#v}"
+          echo "expected tag: $EXPECTED"
+          # The binary prints `holt <version>` (concat!("holt ", env!("CARGO_PKG_VERSION"))).
+          # Assert the printed version contains the expected tag.
+          echo "$VERSION_OUT" | grep -qF "$EXPECTED" || (
+            echo "FAIL: holt --version stdout (\"$VERSION_OUT\") does not contain tag (\"$EXPECTED\")"
+            echo "Did the maintainer forget to bump Cargo.toml's version before tagging?"
+            exit 1
+          )
+          echo "OK: --version parity confirmed (binary version contains $EXPECTED)"
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v6
         with:
