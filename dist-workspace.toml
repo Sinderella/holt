@@ -19,8 +19,8 @@ ci = "github"
 # D-04 (revised 2026-04-29): Homebrew tap deferred to v0.1.x. v0.1 ships shell
 # (curl|sh) + powershell installer scripts and prebuilt GitHub-release tarballs
 # only. macOS users hit Gatekeeper friction on the tarball path; the README
-# documents `xattr -d com.apple.quarantine /usr/local/bin/holt` as the post-
-# install workaround. Tap can be added later (≤30 LOC of dist-workspace.toml
+# documents `xattr -d com.apple.quarantine "$(command -v holt)"` as the post-
+# install workaround (binary lands at ~/.cargo/bin/holt per CARGO_HOME below). Tap can be added later (≤30 LOC of dist-workspace.toml
 # changes + create empty github.com/<user>/homebrew-holt repo) if/when the
 # friction is reported by ≥3 issues, OR if Apple Developer enrollment ($99/yr)
 # becomes worth the cost for native notarization.

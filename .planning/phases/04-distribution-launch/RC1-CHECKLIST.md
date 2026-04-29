@@ -117,7 +117,9 @@ After the workflow completes, verify the success contract:
 
 4. **macOS Gatekeeper note** (manual, only if a macOS user reports breakage):
    ```bash
-   xattr -d com.apple.quarantine /usr/local/bin/holt   # or wherever the user installed it
+   # cargo binstall + dist shell installer both place the binary at ~/.cargo/bin/holt
+   # (per dist-workspace.toml `install-path = "CARGO_HOME"`):
+   xattr -d com.apple.quarantine "$(command -v holt)"
    ```
    The README documents this workaround for the manual-download path. If ≥3 issues are filed reporting Gatekeeper friction, that's the trigger to revisit the Homebrew tap (per AMENDMENT 2026-04-29 in 04-CONTEXT.md) or pursue Apple Developer Program enrollment for native notarization.
 

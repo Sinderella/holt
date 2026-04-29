@@ -13,10 +13,10 @@ cargo binstall holt   # any platform with cargo + cargo-binstall
 # Or grab a prebuilt binary from https://github.com/Sinderella/holt/releases
 ```
 
-On macOS, the manual-download path may trip Gatekeeper because v0.1 binaries are unsigned. Strip the quarantine flag once after extracting the tarball:
+On macOS, the manual-download path may trip Gatekeeper because v0.1 binaries are unsigned. Strip the quarantine flag once after extracting the tarball — `cargo binstall` and `dist`'s shell installer both place the binary at `~/.cargo/bin/holt`, so:
 
 ```bash
-xattr -d com.apple.quarantine /usr/local/bin/holt
+xattr -d com.apple.quarantine "$(command -v holt)"
 ```
 
 (Apple Developer Program enrollment for native notarization is on the v0.1.x roadmap.)
