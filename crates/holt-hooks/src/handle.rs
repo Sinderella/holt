@@ -96,19 +96,18 @@ pub fn handle_event(event: HookEvent, stdin_bytes: &[u8], env: &Env) -> HookOutc
         return HookOutcome::Unwritable;
     }
 
-    // D-12: set 0o600 perms after rename. atomic_write opens the tmp with
-    // mode 0o600 on Unix, so the rename inherits it; this explicit chmod is
-    // defence-in-depth and matches the success-criterion language ("0600
-    // permissions" verified via stat).
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        if let Ok(meta) = std::fs::metadata(&resolved.path) {
-            let mut perm = meta.permissions();
-            perm.set_mode(0o600);
-            let _ = std::fs::set_permissions(&resolved.path, perm);
-        }
-    }
+    // D-12: 0o600 permissions on the heartbeat file.
+    //
+    // WR-03: NOT enforced via a post-rename `set_permissions(0o600)` here
+    // anymore. `holt_schemas::atomic_write` opens the tmp file with
+    // `OpenOptionsExt::mode(0o600)` (see `crates/holt-schemas/src/writer.rs`).
+    // The 0o600 bits have no group/other bits, so the umask cannot widen
+    // them; the renamed-to file inherits 0o600 from the tmp inode. A second
+    // metadata()+set_permissions() pair was redundant — the must_have-1 test
+    // and the `stat` evidence in 02-VERIFICATION.md both verify the file is
+    // 0o600 without this code path. Removing it saves a stat + chmod syscall
+    // pair on every successful PreToolUse fire (very frequent, on the
+    // sub-20ms render path).
 
     // Step 5: warn on fallback (criterion #4: "emits a single one-line stderr
     // warning naming the fallback path").
