@@ -157,4 +157,37 @@ fn sigkill_200x_never_leaves_half_written_settings() {
         "200× SIGKILL stress took {:?}, budget 60s",
         elapsed
     );
+
+    // WR-06: assert final tmp-file state. The 50× concurrent test asserts
+    // "no orphan .holt-tmp.<pid>" because every child completed normally —
+    // atomic_write's success path removes the tmp file after rename. Under
+    // SIGKILL, a child killed BETWEEN tmp-open and rename(2) cannot run
+    // its post-rename cleanup, so the tmp file survives until the NEXT
+    // `holt install-hooks` invocation observes it.
+    //
+    // This loop wipes orphans at the START of each iteration (lines ~95-101
+    // above), so by iter 200's end there can be at most ONE orphan: the
+    // one left behind by the final iteration if its SIGKILL hit before
+    // rename. Anything more than one orphan indicates per-iter cleanup
+    // is broken or atomic_write is leaking tmp files even on the success
+    // path (a real C3 contract regression).
+    //
+    // The orphan-recovery story for production code: a future hardening
+    // (deferred — see WR-06 IN-style follow-up) would sweep stale
+    // `.holt-tmp.*` files at the start of `holt install-hooks` so the
+    // user never sees them; v0.1 ships without this sweep because the
+    // tmp files are 0o600 and cosmetically harmless.
+    let orphans: Vec<_> = fs::read_dir(&claude)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_name().to_string_lossy().contains(".holt-tmp."))
+        .collect();
+    assert!(
+        orphans.len() <= 1,
+        "expected ≤1 orphan .holt-tmp.* after 200× SIGKILL (the per-iter \
+         cleanup wipes prior leaks; only the final iter's tmp can survive). \
+         got {} orphans: {:?}",
+        orphans.len(),
+        orphans.iter().map(|e| e.file_name()).collect::<Vec<_>>()
+    );
 }
