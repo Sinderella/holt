@@ -2,7 +2,7 @@
 
 **Project:** holt — Rust statusLine for Claude Code with multi-session orchestration and an ASCII otter pet (Nak)
 **Milestone:** v0.1 — Runtime hygiene wedge (the lovable MVP, target 3–4 weekends)
-**Last updated:** 2026-04-29 (Phase 4 complete; v0.1 milestone codebase work done)
+**Last updated:** 2026-04-29 (Phase 4 + 4.1 complete; v0.1 milestone codebase + gap-closure done)
 
 ## Project Reference
 
@@ -24,6 +24,7 @@
 [x] Phase 2: Heartbeat hook (write side)      ✓ 2026-04-28 (verified passed; 51/51 tests; review-fix 11/11 critical+warning)
 [x] Phase 3: install-hooks UX                 ✓ 2026-04-28 (verified passed; 80/80 tests; review-fix 6/6 critical+warning; all 6 hard constraints C1..C6 enforced)
 [x] Phase 4: Distribution + launch            ✓ 2026-04-29 (verified PARTIAL — codebase complete; 3 maintainer rc.1 tag-push items deferred to RC1-CHECKLIST.md; review-fix 3/4 warnings, 1 deferred + rationale)
+[x] Phase 4.1: Gap-closure (bootstrap auto)   ✓ 2026-04-29 (tools/bootstrap-github.sh; RC1-CHECKLIST collapsed from 6 to 4 pre-tag steps; tag-push retained as deliberate human decision)
 ```
 
 ## Performance Metrics
