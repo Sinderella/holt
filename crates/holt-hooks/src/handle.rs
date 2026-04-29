@@ -121,7 +121,15 @@ pub fn handle_event(event: HookEvent, stdin_bytes: &[u8], env: &Env) -> HookOutc
         let reason = match resolved.tier {
             ResolvedTier::TmpDir => FallbackReason::XdgUnavailable,
             ResolvedTier::Cache => FallbackReason::XdgAndTmpUnavailable,
-            ResolvedTier::XdgRuntimeDir => unreachable!("is_fallback() filtered this"),
+            // CR-01: Defensive fallthrough. `is_fallback()` filters
+            // `XdgRuntimeDir` today, but a future maintainer adding a new
+            // `ResolvedTier` variant must update both that helper AND this
+            // match. Per the module-level "Never panics" contract on lib.rs,
+            // we degrade to the broadest known fallback reason rather than
+            // panic on the render path. A panic here would propagate to the
+            // CLI dispatcher AFTER a successful heartbeat write, turning a
+            // cosmetic stderr-warning step into a CC-visible non-zero exit.
+            ResolvedTier::XdgRuntimeDir => FallbackReason::XdgUnavailable,
         };
         return HookOutcome::FellBack {
             path: resolved.path,
