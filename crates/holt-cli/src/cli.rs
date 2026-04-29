@@ -68,12 +68,25 @@ pub enum Command {
     /// JSON snippet for manual paste. `--dry-run` and `--print` are mutually exclusive.
     /// The single backup at `<settings>.holt.bak` is overwritten on each run (not a
     /// versioned chain).
+    ///
+    /// `--dry-run` and `--print` are read-only and DO NOT acquire the fs2 exclusive
+    /// lock — the diff/snippet is a preview, not a serialised commit plan. If a
+    /// concurrent default-mode `holt install-hooks` is mid-write, the dry-run diff
+    /// may show changes that have already been applied by the time you read it
+    /// (no data corruption results — atomic_write guarantees no torn state). Use
+    /// the diff as a preview, not a guarantee about the next write's outcome.
     InstallHooks {
         /// Print a unified diff of what would change; do not modify settings.json (D-11).
+        ///
+        /// Read-only: does not acquire the fs2 lock. The diff is a preview — if
+        /// another `holt install-hooks` is concurrently running, the diff may show
+        /// changes that are already applied by the time you read it.
         #[arg(long, conflicts_with = "print")]
         dry_run: bool,
         /// Print just the holt hook-entry JSON snippet for manual paste; do not modify
         /// settings.json (D-12).
+        ///
+        /// Read-only: does not acquire the fs2 lock.
         #[arg(long)]
         print: bool,
     },

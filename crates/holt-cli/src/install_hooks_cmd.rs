@@ -11,6 +11,32 @@
 //!      [`merge_settings`], call [`commit`] (writes `.holt.bak` then
 //!      atomic_writes the merged bytes). Exit 0.
 //!
+//! WR-04 — `--dry-run` and `--print` are LOCK-FREE BY DESIGN. They are
+//! read-only previews, not commit plans bound to the next default-mode
+//! write. If a concurrent default-mode `holt install-hooks` is mid-write,
+//! the dry-run reader observes whichever inode is currently published —
+//! either pre-merge or post-merge bytes (atomic_write guarantees no torn
+//! state). The diff may then show pending changes that have already been
+//! applied by the time the user reads stderr; no data corruption results.
+//! This is documented in the `--dry-run` clap help text (`cli.rs`) so the
+//! contract is visible at the user-facing surface, not just in the
+//! implementation.
+//!
+//! Rationale for not acquiring a shared lock on dry-run: the cost (200ms
+//! lock-budget on dry-run wall clock) does not justify the benefit
+//! (preview vs already-applied diff). The 200ms timeout is so narrow in
+//! practice (sub-second concurrent windows) that the typical mental model
+//! of "diff is a preview, not a transaction" matches user expectations.
+//!
+//! WR-05 — Lock release on panic relies on the workspace `panic = "abort"`
+//! release profile (Cargo.toml `[profile.release] panic = "abort"`). On
+//! panic, the OS reaps the file descriptor (and thus the fs2 lock) at
+//! process exit, so locks never permanently leak. The dispatcher also
+//! `drop(lock_handle)` explicitly on every return path so that under
+//! `panic = "unwind"` (if the profile is ever changed) unwind-based
+//! release still works. See `lock.rs::acquire_settings_lock` rustdoc for
+//! the full contract.
+//!
 //! Errors print to stderr and return non-zero exit codes. Note this is
 //! distinct from `holt hook` (Phase 2) which always exits 0 — `holt
 //! install-hooks` is user-invoked, not a CC hook, so non-zero exits are
