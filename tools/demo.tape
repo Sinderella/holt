@@ -12,10 +12,10 @@ Output assets/demo.gif
 
 Set Theme "Catppuccin Mocha"
 Set FontSize 14
-Set Width 1000
-Set Height 520
-Set Padding 12
-Set TypingSpeed 60ms
+Set Width 900
+Set Height 400
+Set Padding 10
+Set TypingSpeed 50ms
 Set PlaybackSpeed 1.0
 
 # ─── Step 1: introduce the slow statusLine the user has today ──────────────
@@ -33,9 +33,9 @@ Enter
 Sleep 5500ms
 
 # ─── Step 3: apply the fix — wrap with `holt run --` ───────────────────────
-Type "# Wrap it with \`holt run --\`. One edit to ~/.claude/settings.json."
+Type "# Wrap it with 'holt run --'. One edit to ~/.claude/settings.json."
 Enter
-Type "$EDITOR ~/.claude/settings.json   # \"command\": \"bash slow-statusline.sh\" -> \"command\": \"holt run -- bash slow-statusline.sh\""
+Type "$EDITOR ~/.claude/settings.json   # change command to: holt run -- bash slow-statusline.sh"
 Enter
 Sleep 1500ms
 
@@ -47,6 +47,6 @@ Enter
 Sleep 1500ms
 
 # ─── Closer ────────────────────────────────────────────────────────────────
-Type "# Bar is never blocked. Slow scripts are diagnosed via \`holt doctor\` (v0.5)."
+Type "# Bar never blocks. Slow scripts diagnosed via 'holt doctor' (v0.5)."
 Enter
-Sleep 2000ms
+Sleep 1200ms
