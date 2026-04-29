@@ -21,10 +21,16 @@ use crate::stdin::{StdinParseOutcome, slurp_and_parse};
 /// Run the hook subcommand. Returns the process exit code; ALWAYS 0 per D-03.
 /// The `event` parameter has already been parsed by clap (`HookEventArg::into_lib`).
 pub fn run(event: HookEvent) -> i32 {
+    // WR-02: empty stdin is a NORMAL condition (Phase 1 holt-cli/src/stdin.rs
+    // documents StdinParseOutcome::Empty as 'Stdin was empty (or unreadable
+    // — treated equivalently per H5 defensive posture)'), not a parse
+    // failure. Short-circuit before handle_event so we don't write a
+    // parse_fail breach record on every `echo | holt hook PreToolUse`
+    // ad-hoc developer test or every empty-stdin Notification fire.
     let stdin_bytes = match slurp_and_parse() {
         StdinParseOutcome::Ok { raw, .. } => raw,
         StdinParseOutcome::ParseFail { raw, .. } => raw,
-        StdinParseOutcome::Empty => Vec::new(),
+        StdinParseOutcome::Empty => return 0,
     };
 
     let env = Env {
