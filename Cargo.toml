@@ -44,6 +44,15 @@ autotests = true
 name = "architecture_dag"
 path = "tests/architecture_dag.rs"
 
+# Plan 03-02 D-03 + D-05 / C4 enforcement. BFS-walks `cargo metadata` to
+# assert that `jsonc-parser` and `fs2` packages have no incoming edge from
+# any non-`holt-cli` workspace crate. Adding either dep to `holt-schemas`,
+# `holt-supervisor`, `holt-hooks`, `holt-orchestrator`, or `holt-render`'s
+# Cargo.toml MUST fail this test.
+[[test]]
+name = "cli_dep_boundary"
+path = "tests/cli_dep_boundary.rs"
+
 [dev-dependencies]
 serde_json.workspace = true
 
