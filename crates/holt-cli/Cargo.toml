@@ -23,6 +23,17 @@ serde_json.workspace = true
 # Phase 2 D-14: ISO 8601 timestamp for `Env.now_iso` plumbed into
 # `holt_hooks::handle_event` from the `holt hook <event>` dispatcher.
 jiff.workspace = true
+# Phase 3 D-09 + module-level error types in install_hooks/{mod,merge,lock}.rs.
+thiserror.workspace = true
+# Phase 3 D-02 + D-03 / C4: jsonc-parser CST round-trip preserves comments +
+# key order on the settings.json read-merge-write path. C4 confines this dep
+# to holt-cli only — verified by the workspace-root `cli_dep_boundary` test
+# in plan 03-02.
+jsonc-parser = { version = "0.26", features = ["cst"] }
+# Phase 3 D-04 + D-05 / C3: fs2 exclusive lock on settings.json for the
+# read-merge-write window. C4 confines this dep to holt-cli only — verified
+# by the same workspace-root boundary test in plan 03-02.
+fs2 = "0.4"
 # WR-08: tempfile was previously a runtime dependency for the
 # --self-bench / --self-bench-hook harnesses. It is now hand-rolled in
 # crates/holt-cli/src/self_bench.rs::BenchScratchDir so the release binary

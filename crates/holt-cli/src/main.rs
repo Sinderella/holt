@@ -18,6 +18,7 @@
 
 mod cli;
 mod hook;
+mod install_hooks;
 mod run;
 mod self_bench;
 mod stdin;
