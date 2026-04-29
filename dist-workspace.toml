@@ -15,24 +15,16 @@ ci = "github"
 # commit signing commit-time signing as release identity per CONTEXT.md
 # D-12 and ROADMAP success criterion #1. Revisit if/when ≥3 issues request
 # GPG-signed artifacts.
-# The installers to generate for each app
-installers = ["shell", "powershell", "homebrew"]
-# D-04: Homebrew tap GitHub repo. Homebrew's `homebrew-` prefix is stripped at
-# install time, so the user-facing command is `brew install Sinderella/holt`
-# (which is short for `brew install Sinderella/holt/holt` when the formula
-# name matches the tap suffix). The empty repo at github.com/Sinderella/
-# homebrew-holt is a one-time manual prerequisite — see plan 04-02's README
-# install instructions for the `gh repo create` step.
-tap = "Sinderella/homebrew-holt"
-# D-04: formula name override — Cargo package is `holt-cli`, but the user-
-# facing binary and project name is `holt`. Without this override the formula
-# would be named `holt-cli` and `brew install Sinderella/holt` (D-04's
-# documented short-form) would not resolve.
-formula = "holt"
-# D-04: enable the homebrew publisher so dist auto-pushes the formula on every
-# release tag. Without this, `installers = ["homebrew"]` only generates the
-# .rb file as a release artifact — it does not push to the tap repo.
-publish-jobs = ["homebrew"]
+# The installers to generate for each app.
+# D-04 (revised 2026-04-29): Homebrew tap deferred to v0.1.x. v0.1 ships shell
+# (curl|sh) + powershell installer scripts and prebuilt GitHub-release tarballs
+# only. macOS users hit Gatekeeper friction on the tarball path; the README
+# documents `xattr -d com.apple.quarantine /usr/local/bin/holt` as the post-
+# install workaround. Tap can be added later (≤30 LOC of dist-workspace.toml
+# changes + create empty github.com/<user>/homebrew-holt repo) if/when the
+# friction is reported by ≥3 issues, OR if Apple Developer enrollment ($99/yr)
+# becomes worth the cost for native notarization.
+installers = ["shell", "powershell"]
 # Target platforms to build apps for (Rust target-triple syntax).
 # D-03: exactly 4 targets at v0.1. Linux arm64 deferred to v0.1.x per
 # docs/02-scope.md; Windows arm64 not on the table at v0.1. The Windows
