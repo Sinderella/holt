@@ -73,7 +73,9 @@ Ship a Rust shim that wraps the user's existing `statusLine.command` so Claude C
   4. Two concurrent `holt install-hooks` invocations from separate terminals against the same settings.json produce a result equivalent to running them serially: the second invocation either acquires the `fs2::FileExt::try_lock_exclusive()` lock and produces an idempotent no-op result, OR exits non-zero within 200ms with a "another holt install-hooks is running" message — never produces a torn write (verified by a 50× concurrent-invocation stress test that asserts the final file always parses with both `serde_json` and `jsonc-parser`).
   5. Killing `holt install-hooks` with `SIGKILL` mid-write leaves either the original `settings.json` intact OR the new merged version intact — never a half-written file (verified by `fsync(2)` on the temp fd before `rename(2)` and by a `dm-flakey`-style power-loss simulation that asserts `serde_json::from_str` succeeds on every observed state of the file).
 
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 03-01-PLAN.md — JSONC fixture corpus (D-01 ≥6 paired scenarios) + jsonc-parser CST merge library + fs2 200ms lock module + Phase-1-atomic_write commit pipeline (D-02..D-10; library half of HOOK-07/09/10)
+- [ ] 03-02-PLAN.md — `holt install-hooks` clap subcommand (D-16) + `--dry-run` (D-11) + `--print` (D-12) + 50× concurrent stress (D-14) + 200× SIGKILL atomicity (D-15) + workspace-root `tests/cli_dep_boundary.rs` enforcing C4 (D-03+D-05); ROADMAP success criteria #1..#5 all map to runnable tests here (HOOK-08 + verification half of HOOK-07/09/10)
 
 ### Phase 4: Distribution + launch
 
@@ -99,7 +101,7 @@ Ship a Rust shim that wraps the user's existing `statusLine.command` so Claude C
 |-------|----------------|--------|-----------|
 | 1. Schema + supervisor substrate | 3/3 | Complete ✓ | 2026-04-28 |
 | 2. Heartbeat hook (write side) | 2/2 | Complete ✓ | 2026-04-28 |
-| 3. install-hooks UX | 0/? | Not started | - |
+| 3. install-hooks UX | 0/2 | Planned | - |
 | 4. Distribution + launch | 0/? | Not started | - |
 
 ## Parallelization
