@@ -137,10 +137,15 @@ fn must_have_4_fallback_to_cache_when_xdg_and_tmpdir_unset() {
 #[test]
 fn must_have_4_unwritable_returns_unwritable_outcome() {
     let _guard = ENV_LOCK.lock().unwrap();
-    // All three tiers point at a non-writable parent (a file that exists,
-    // not a directory). default_cache_root falls back to TMPDIR/holt-<pid>
-    // when HOME is unset → set HOME to a path-with-a-FILE-at-it so creating
-    // .cache/holt/sessions inside it is impossible.
+    // WR-06: tighten the assertion. The previous test accepted FellBack as
+    // a substitute for Unwritable, citing a hypothetical default_cache_root
+    // last-resort to temp_dir — but reading
+    // crates/holt-supervisor/src/paths.rs::default_cache_root, the temp_dir
+    // last-resort branch fires ONLY when HOME (and USERPROFILE) is unset.
+    // We DO set HOME (to a regular file path), so the
+    // PathBuf::from(h).join('.cache').join('holt') branch is taken, and
+    // create_dir_all under a regular file MUST fail. Therefore the only
+    // legitimate outcome is Unwritable; FellBack would mask a real bug.
     let blocker = tempfile::NamedTempFile::new().unwrap(); // a regular file, not a dir
     unsafe {
         std::env::set_var("XDG_RUNTIME_DIR", "");
@@ -151,21 +156,12 @@ fn must_have_4_unwritable_returns_unwritable_outcome() {
 
     let bytes = fixture_bytes("v2.1.119/PreToolUse.json");
     let outcome = handle_event(HookEvent::PreToolUse, &bytes, &env());
-    // We accept either Unwritable (perfect) or FellBack to a temp_dir
-    // location (default_cache_root's WR-01 last resort uses temp_dir which is
-    // ALWAYS writable, so on most systems the cascade actually succeeds).
-    // The success-criterion language permits this: "with all three locations
-    // un-writable, the hook exits 0 silently and writes a kind: unwritable
-    // entry to breaches.log if writable; if breaches.log is unreachable, exit
-    // 0 with no further action." On most CI machines temp_dir IS reachable,
-    // so the criterion's "all three unwritable" branch is rare in practice.
     match outcome {
-        HookOutcome::Unwritable | HookOutcome::FellBack { .. } => {
-            // Either is acceptable. The KEY assertion: handle_event RETURNED
-            // (didn't panic), and didn't write a Wrote-tier-1 file.
-        }
-        HookOutcome::Wrote { .. } => panic!("XDG and TMPDIR both empty → must NOT use tier 1"),
-        HookOutcome::ParseFailed => panic!("fixture parses cleanly"),
+        HookOutcome::Unwritable => { /* expected */ }
+        other => panic!(
+            "WR-06: expected HookOutcome::Unwritable when HOME points at a regular file \
+             (default_cache_root must fail to mkdir under it), got {other:?}"
+        ),
     }
 }
 
