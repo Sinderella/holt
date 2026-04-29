@@ -43,3 +43,9 @@ fs2 = "0.4"
 
 [dev-dependencies]
 tempfile.workspace = true
+# Plan 03-02 D-15: SIGKILL atomicity test calls libc::kill(pid, SIGKILL) FFI
+# directly. `libc` was preferred over `nix` because `nix` is already a runtime
+# dep on `holt-supervisor`; pulling it as a `holt-cli` dev-dep would cross
+# crate boundaries. `libc` is on the no-forbidden list and is already in the
+# transitive dependency tree (via tempfile / fs2), so this is no extra weight.
+libc = "0.2"
