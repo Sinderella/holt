@@ -14,7 +14,7 @@
 //! in `breaches.log` (best-effort) inside `handle_event`; we don't even check
 //! whether the breach was written.
 
-use holt_hooks::{Env, HookEvent, handle_event};
+use holt_hooks::{Env, HookEvent, HookOutcome, handle_event};
 
 use crate::stdin::{StdinParseOutcome, slurp_and_parse};
 
@@ -33,9 +33,16 @@ pub fn run(event: HookEvent) -> i32 {
         now_iso: jiff::Timestamp::now().to_string(),
     };
 
-    // D-03: ignore the outcome variant. parse_fail / unwritable already routed
-    // through `holt_supervisor::breaches::append_breach` inside `handle_event`.
-    let _outcome = handle_event(event, &stdin_bytes, &env);
+    // WR-01: explicit exhaustive match (instead of `let _outcome = ...`) so
+    // the compiler forces a conscious decision if `HookOutcome` ever grows a
+    // new variant. The contract today is 'exit 0 unconditionally' per D-03;
+    // a new variant should not silently inherit that behavior.
+    match handle_event(event, &stdin_bytes, &env) {
+        HookOutcome::Wrote { .. }
+        | HookOutcome::FellBack { .. }
+        | HookOutcome::ParseFailed
+        | HookOutcome::Unwritable => {}
+    }
 
     0
 }
