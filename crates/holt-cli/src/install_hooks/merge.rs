@@ -220,16 +220,129 @@ fn is_canonical_entry(obj: &CstObject, expected_command: &str) -> bool {
     string_property(inner, "command").as_deref() == Some(expected_command)
 }
 
-/// Read a JSON-string property's decoded value as a Rust String, returning
-/// `None` if absent or non-string. Strips the surrounding `"` quotes from
-/// `raw_value()`; the canonical command/matcher strings have no escapes
-/// and no embedded quotes, so trim_matches('"') is faithful here.
+/// Read a JSON-string property's DECODED value as a Rust String, returning
+/// `None` if absent, non-string, or undecodable.
+///
+/// WR-03: previously used `raw_value().trim_matches('"')`, which is faithful
+/// only for strings with no escape sequences (which is true for holt's own
+/// canonical commands but NOT necessarily true for user-authored entries
+/// the same function reads via `element_command_contains` and
+/// `is_canonical_entry`). A user entry with `"command": "holt hook PreToolUse"`
+/// (unicode-escaped ASCII) would be misclassified by `is_canonical_entry`
+/// and cause `replace_with` to fire on every install-hooks run, breaking
+/// byte-equal idempotency for that user. Use jsonc-parser 0.26.3's
+/// `CstStringLit::decoded_value()` (returns `Result<String, ParseStringErrorKind>`)
+/// to perform proper JSON-string unescape.
+///
+/// Decoding errors are mapped to `None` so that a malformed/undecodable
+/// `command` is treated the same as "field absent" — defensive-parse posture
+/// (Phase 1+2 precedent): never panic on user-shaped input; just refuse to
+/// treat the entry as canonical/holt-owned.
 fn string_property(obj: &CstObject, name: &str) -> Option<String> {
     let prop = obj.get(name)?;
     let value = prop.value()?;
     let CstNode::Leaf(CstLeafNode::StringLit(s)) = value else {
         return None;
     };
-    let raw = s.raw_value();
-    Some(raw.trim_matches('"').to_string())
+    s.decoded_value().ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// WR-03 regression: when a user's settings.json contains a `command`
+    /// field that uses JSON unicode escapes for ASCII characters (e.g.,
+    /// `"holt hook PreToolUse"` decodes to `"holt hook PreToolUse"`),
+    /// the merger MUST treat it as canonical (byte-equal idempotency) so
+    /// `replace_with` does not fire on every re-merge.
+    ///
+    /// Prior to WR-03, `string_property` returned the raw bytes verbatim
+    /// (escape sequences un-decoded), so `is_canonical_entry` compared
+    /// `"holt hook PreToolUse"` to `"holt hook PreToolUse"` and
+    /// returned false, causing infinite "changed" merges.
+    ///
+    /// With WR-03, `string_property` calls `CstStringLit::decoded_value()`,
+    /// which performs proper JSON-string unescape, so the comparison matches.
+    #[test]
+    fn wr03_escaped_canonical_command_is_recognized_as_canonical() {
+        // Hand-build a settings.json that uses `h` (lowercase 'h') in
+        // the command string for the PreToolUse event. After decode, the
+        // command equals the canonical "holt hook PreToolUse".
+        let input = r#"{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "holt hook PreToolUse" }
+        ]
+      }
+    ]
+  }
+}
+"#;
+        let merged = merge_settings(input).expect("merge succeeds on escaped-canonical");
+
+        // The first PreToolUse element must NOT be replaced — its decoded
+        // command equals the canonical, so is_canonical_entry must return
+        // true and the entry must remain bytes-identical (no replace_with).
+        // We assert this indirectly: after one merge, the output contains
+        // the original `h` escape exactly once for PreToolUse (i.e.,
+        // jsonc-parser preserved the raw bytes because we never called
+        // replace_with on that node), and there is exactly ONE entry for
+        // PreToolUse (no duplicate appended).
+        assert!(
+            merged.bytes.contains(r#""holt hook PreToolUse""#),
+            "expected escape sequence preserved (replace_with not called); got:\n{}",
+            merged.bytes
+        );
+        let pretool_count = merged.bytes.matches("\"matcher\": \"*\"").count();
+        // Holt has 5 events; user-supplied one already covers PreToolUse,
+        // so the post-merge file has 5 matcher:"*" lines (1 from user
+        // PreToolUse, 4 newly inserted for the other events).
+        assert_eq!(
+            pretool_count, 5,
+            "expected 5 matcher:* entries (1 escaped user + 4 new); got {pretool_count} in:\n{}",
+            merged.bytes
+        );
+    }
+
+    /// Companion regression: a user's escape-laden NON-canonical command
+    /// (a substring match for "holt hook " but with different content
+    /// after) must still be detected via `element_command_contains` and
+    /// REPLACED in-place (D-10 detect-by-substring).
+    #[test]
+    fn wr03_escaped_substring_match_still_replaced() {
+        // `holt hook ` decodes to `holt hook ` (the detection substring),
+        // but the full command differs from the canonical so this must be
+        // replaced with the canonical entry.
+        let input = r#"{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "holt hook Stop --extra-flag" }
+        ]
+      }
+    ]
+  }
+}
+"#;
+        let merged = merge_settings(input).expect("merge succeeds on escaped-substring");
+        // Post-merge, the Stop entry should have been replaced with the
+        // canonical (no `--extra-flag`), and there's exactly one Stop entry.
+        let stop_count = merged.bytes.matches("\"holt hook Stop\"").count();
+        assert_eq!(
+            stop_count, 1,
+            "expected exactly 1 canonical Stop after replace_with; got {stop_count} in:\n{}",
+            merged.bytes
+        );
+        assert!(
+            !merged.bytes.contains("--extra-flag"),
+            "extra-flag should have been replaced out; got:\n{}",
+            merged.bytes
+        );
+    }
 }
