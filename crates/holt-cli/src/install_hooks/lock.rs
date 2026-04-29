@@ -14,6 +14,31 @@
 //! separate lock file. fs2's exclusive lock is advisory but every other
 //! `holt install-hooks` invocation respects it because every invocation
 //! enters the same loop here.
+//!
+//! # Lock release semantics (WR-05 contract)
+//!
+//! The lock is released on `Drop` of the returned `File` handle. Two
+//! release paths exist:
+//!
+//! 1. **Normal exit:** the dispatcher in `install_hooks_cmd.rs` calls
+//!    `drop(lock_handle)` explicitly on every return path. This is the
+//!    primary, profile-independent release path.
+//!
+//! 2. **Panic / abort:** under workspace `[profile.release] panic =
+//!    "abort"` (Cargo.toml), a panic in the read-merge-write window
+//!    aborts the process immediately. POSIX `flock(2)` locks are released
+//!    on file descriptor close, which the kernel does on process exit;
+//!    Windows `LockFileEx` releases the lock when the process handle
+//!    closes. Net: locks are never permanently leaked even on panic.
+//!
+//! If the workspace profile is ever changed to `panic = "unwind"`, callers
+//! MUST continue to ensure the `File` handle is `drop`'d on every path —
+//! the existing dispatcher already does this. A future `catch_unwind`
+//! wrapper around the dispatcher (e.g., for a JSON-output mode) would
+//! also need to ensure unwind-into-drop happens before the catch-handler
+//! runs; today's drop-on-every-return-path satisfies this implicitly
+//! because the unwind would propagate through the function frame holding
+//! the `File`.
 
 use fs2::FileExt;
 use std::fs::OpenOptions;
