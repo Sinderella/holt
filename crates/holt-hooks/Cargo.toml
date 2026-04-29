@@ -4,6 +4,11 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+# Disable cargo's auto-test discovery so it doesn't duplicate the
+# `sigkill_test_driver.rs` file (which is also declared as a `[[bin]]` test
+# driver below — see Task 9 / D-13). Tests are explicitly declared via
+# `[[test]]` blocks at the bottom of this manifest.
+autotests = false
 
 [dependencies]
 # Phase 1 keystone — Heartbeat type, atomic_write helper, read_heartbeat (used in tests).
@@ -30,3 +35,30 @@ nix = { workspace = true, features = ["user"] }
 tempfile = { workspace = true }
 serde_json = { workspace = true }
 holt-schemas = { path = "../holt-schemas" }
+
+# Test driver used by tests/sigkill_atomicity.rs (D-13). The driver reads a
+# fixture path from $HOLT_HOOKS_TEST_FIXTURE, fires handle_event(PreToolUse),
+# then exits. Out-of-process execution is required because we SIGKILL the
+# child mid-write and the parent must observe the half-state — same-process
+# tests can't reproduce the partial-write window.
+[[bin]]
+name = "sigkill_test_driver"
+path = "tests/sigkill_test_driver.rs"
+test = false
+bench = false
+required-features = []
+
+# Integration tests — declared explicitly because `autotests = false` above
+# disables cargo's auto-discovery (necessary to avoid double-targeting the
+# sigkill_test_driver.rs file as both a `[[bin]]` and an integration test).
+[[test]]
+name = "assemble_field_policy"
+path = "tests/assemble_field_policy.rs"
+
+[[test]]
+name = "handle_event_smoke"
+path = "tests/handle_event_smoke.rs"
+
+[[test]]
+name = "sigkill_atomicity"
+path = "tests/sigkill_atomicity.rs"
