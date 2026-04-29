@@ -15,6 +15,26 @@ use holt_schemas::read_heartbeat;
 // `cargo test` runs integration tests in parallel by default. We mutate
 // process-global env vars (XDG_RUNTIME_DIR, TMPDIR, HOME), so any test in
 // this file MUST take this lock for its full duration.
+//
+// WR-09 — IMPORTANT: this lock guards against parallel test BODIES inside
+// THIS test binary. It does NOT guard against:
+//   1. Helper threads spawned by tempfile / Command::spawn / future
+//      stdin-slurp deadline threads reading env vars concurrently.
+//   2. Child processes spawned by other tests in the same binary that
+//      inherit env at fork time — a fork during another test's set_var
+//      is a race.
+//   3. Other test binaries in the workspace running in parallel
+//      (cargo's --test-threads applies per-binary).
+//
+// std::env::set_var is unsafe in Rust 2024 specifically because it may
+// race with any other thread reading env vars in the same process. The
+// holt-hooks test binary is effectively single-threaded inside any locked
+// region today, so the unsafe contract holds — but the safety margin is
+// thin. If we add helper-thread-spawning code (a stdin slurp deadline
+// thread, an async runtime, anything that reads env from a background
+// task), migrate to the `serial_test` crate or single-threaded test
+// execution (`cargo test -- --test-threads=1`) before the next env-var
+// test lands.
 static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 fn env() -> Env {
