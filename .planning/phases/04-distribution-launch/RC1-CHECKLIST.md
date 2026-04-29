@@ -12,16 +12,23 @@
 
 Run these BEFORE pushing `v0.1.0-rc.1`:
 
-1. **Create the GitHub repo** (one-time bootstrap; skip if `gh repo view Sinderella/holt` succeeds):
+1. **Bootstrap the GitHub repo + apply labels** (one-shot; idempotent on re-runs of the labels half):
    ```bash
-   gh repo create Sinderella/holt \
-     --public \
-     --description "A small Rust statusLine for Claude Code, with a small otter in it." \
-     --homepage "https://github.com/Sinderella/holt" \
-     --source . --remote origin --push
+   ./tools/bootstrap-github.sh --dry-run    # preview what will happen
+   ./tools/bootstrap-github.sh              # actually create repo + push + apply labels
    ```
 
-   Rationale: At plan-execution time the repo did not yet exist on GitHub (`gh api repos/Sinderella/holt` returned 404). The setup-labels script (Task 4) and the `dist`-emitted release workflow both target `Sinderella/holt`; the repo must exist before either is exercised.
+   What this does (Phase 4.1, see commit landing this script for rationale):
+   - Verifies preconditions (gh CLI authenticated, working tree clean, no `origin` configured, `setup-labels.sh` present + executable).
+   - `gh repo create Sinderella/holt --public --source . --remote origin --push` — creates the GitHub repo, attaches it as `origin`, and pushes the local main branch in one shot.
+   - Calls `./tools/setup-labels.sh` against the new repo — applies the 9 CONTRIBUTING.md labels via `gh label create --force` (idempotent).
+
+   Override default repo for forks: `REPO=fork-user/holt ./tools/bootstrap-github.sh`. Verify labels post-run:
+   ```bash
+   gh label list --repo Sinderella/holt --json name --jq '.[].name' | sort
+   ```
+
+   Expected: 9 holt labels plus any GitHub defaults. ROADMAP success criterion #5 satisfied.
 
 2. **Bump Cargo.toml versions.** Update `version` in EACH crate's `Cargo.toml` to `0.1.0-rc.1`:
    ```bash
@@ -31,37 +38,19 @@ Run these BEFORE pushing `v0.1.0-rc.1`:
    done
    cargo update
    git add -A && git commit -m "chore(release): bump versions to 0.1.0-rc.1 (D-10)"
+   git push   # push the bump commit before tagging
    ```
 
    Rationale: `env!("CARGO_PKG_VERSION")` resolves to whatever's in Cargo.toml at compile time. The D-13 version smoke test (`crates/holt-cli/tests/version_smoke.rs`) and the D-14 release-workflow parity check both depend on Cargo.toml's version matching the tag. SemVer-compliant pre-release identifiers like `0.1.0-rc.1` are valid in both Cargo and dist's URL templating.
 
-3. **Apply the 9 issue labels** (deferred at plan-execution time because `Sinderella/holt` did not yet exist on GitHub; run AFTER Step 1):
-   ```bash
-   gh auth status                             # confirms login is active for an account with admin/maintain on Sinderella/holt
-   gh auth switch --user Sinderella           # if your active gh account isn't Sinderella, switch first
-   ./tools/setup-labels.sh                    # idempotent; safe to re-run
-   gh label list --repo Sinderella/holt --json name --jq '.[].name' | sort
-   ```
-
-   Expected last-line output is the 9 holt labels (plus any GitHub defaults the repo was created with). Rationale: ROADMAP success criterion #5 requires the 9 labels exist on the repo before launch. The script is idempotent — running it twice is harmless.
-
-4. **Push the existing local commits to the new remote.** After Step 1 created the remote with `--source . --remote origin --push` (or if you skipped that, configure the remote manually):
-   ```bash
-   git remote -v   # confirm origin -> Sinderella/holt
-   git push -u origin main
-   git log --oneline origin/main | head -5   # confirm the 99-commit history landed
-   ```
-
-   Rationale: The tag-push step below pushes a single tag, but the workflow needs the underlying commits already present on the remote.
-
-5. **Confirm GitHub Actions secrets.** dist's release workflow needs `GITHUB_TOKEN` (auto-provided by Actions) at v0.1; no other secrets are required because v0.1 doesn't sign macOS/Windows binaries (deferred to v0.1.x+ per CONTEXT.md "Open questions deferred"). Verify:
+3. **Confirm GitHub Actions secrets.** dist's release workflow needs `GITHUB_TOKEN` (auto-provided by Actions) at v0.1; no other secrets are required because v0.1 doesn't sign macOS/Windows binaries (deferred to v0.1.x+ per CONTEXT.md "Open questions deferred"). Verify:
    ```bash
    gh secret list --repo Sinderella/holt
    ```
 
    The default `GITHUB_TOKEN` is implicit. No additional secrets needed.
 
-6. **Local self-test.** Build + test + bench locally to catch any pre-tag regression:
+4. **Local self-test.** Build + test + bench locally to catch any pre-tag regression:
    ```bash
    cargo fmt --check
    cargo clippy --workspace --all-targets -- -D warnings
