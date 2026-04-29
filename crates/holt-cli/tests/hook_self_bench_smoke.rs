@@ -44,10 +44,7 @@ fn hook_self_bench_json_has_expected_shape() {
     {
         let p95 = v["overhead_p95_us"].as_u64().unwrap();
         let budget = v["budget_p95_us"].as_u64().unwrap();
-        assert_eq!(
-            budget, 20_000,
-            "D-15: budget_p95_us must be 20000 on Unix"
-        );
+        assert_eq!(budget, 20_000, "D-15: budget_p95_us must be 20000 on Unix");
         assert!(
             v["passed"].as_bool().unwrap_or(false),
             "D-15: hook self-bench FAIL: p95 {p95}us > budget {budget}us. \
