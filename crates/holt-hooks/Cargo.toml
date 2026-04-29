@@ -4,6 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository.workspace = true
 # Disable cargo's auto-test discovery so it doesn't duplicate the
 # `sigkill_test_driver.rs` file (which is also declared as a `[[bin]]` test
 # driver below — see Task 9 / D-13). Tests are explicitly declared via
