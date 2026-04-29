@@ -9,6 +9,22 @@ cargo-dist-version = "0.31.0"
 ci = "github"
 # The installers to generate for each app
 installers = ["shell", "powershell", "homebrew"]
+# D-04: Homebrew tap GitHub repo. Homebrew's `homebrew-` prefix is stripped at
+# install time, so the user-facing command is `brew install Sinderella/holt`
+# (which is short for `brew install Sinderella/holt/holt` when the formula
+# name matches the tap suffix). The empty repo at github.com/Sinderella/
+# homebrew-holt is a one-time manual prerequisite — see plan 04-02's README
+# install instructions for the `gh repo create` step.
+tap = "Sinderella/homebrew-holt"
+# D-04: formula name override — Cargo package is `holt-cli`, but the user-
+# facing binary and project name is `holt`. Without this override the formula
+# would be named `holt-cli` and `brew install Sinderella/holt` (D-04's
+# documented short-form) would not resolve.
+formula = "holt"
+# D-04: enable the homebrew publisher so dist auto-pushes the formula on every
+# release tag. Without this, `installers = ["homebrew"]` only generates the
+# .rb file as a release artifact — it does not push to the tap repo.
+publish-jobs = ["homebrew"]
 # Target platforms to build apps for (Rust target-triple syntax).
 # D-03: exactly 4 targets at v0.1. Linux arm64 deferred to v0.1.x per
 # docs/02-scope.md; Windows arm64 not on the table at v0.1. The Windows
@@ -29,4 +45,10 @@ install-updater = false
 # the dist-emitted baseline. Future dist version bumps may obviate this — if
 # cargo-dist gains a per-target allow-failure config setting, drop this and
 # move the allow-failure declaration into the toml.
+#
+# Re-applying the hand-edit after a `dist generate` regeneration: temporarily
+# comment out the `allow-dirty` line below, run `dist generate --mode ci`, then
+# manually re-add the `continue-on-error: ${{ contains(matrix.targets,
+# 'x86_64-pc-windows-msvc') }}` line right after `runs-on: ${{ matrix.runner }}`
+# in the `build-local-artifacts` job, then re-enable `allow-dirty`.
 allow-dirty = ["ci"]
