@@ -13,7 +13,7 @@ Ship a Rust shim that wraps the user's existing `statusLine.command` so Claude C
 ## Phases
 
 - [x] **Phase 1: Schema + supervisor substrate** ✓ 2026-04-28 — `holt-schemas` keystone crate (heartbeat type, atomic-rename helper, non-panicking reader contract) + `holt-supervisor` (process-wrap with stdio piping, timeout/killpg, LKG cache, timings.jsonl, breaches.log) + `holt-cli` default render path (wrap + supervise + passthrough). Sub-20ms cold-start verified by `holt --self-bench` (p95=0us on macOS arm64). Verified passed: 5/5 ROADMAP must-haves green, 11/11 reqs, 16/16 decisions, 4/4 hard constraints (C1/C2/C5/C6) test-enforced, 28/28 workspace tests post-review-fix.
-- [ ] **Phase 2: Heartbeat hook (write side)** — `holt-hooks` crate + `holt hook <event>` subcommand. CC stdin envelope parse with defensive serde, atomic heartbeat write to `$XDG_RUNTIME_DIR/holt/sessions/<sid>.json` (with macOS / cache-dir fallback chain), `schema_version: 1`, `writer_version` field, `workspace.git_worktree` adoption.
+- [x] **Phase 2: Heartbeat hook (write side)** ✓ 2026-04-28 — `holt-hooks` crate + `holt hook <event>` subcommand. CC stdin envelope parse with defensive serde, atomic heartbeat write to `$XDG_RUNTIME_DIR/holt/sessions/<sid>.json` (with macOS / cache-dir fallback chain), `schema_version: 1`, `writer_version` field, `workspace.git_worktree` adoption. Verified passed: 5/5 ROADMAP must-haves green, 6/6 reqs (HOOK-01..06), 15/15 decisions, 4/4 hard constraints (C1/C2/C5/C6) preserved + new D-15 hook self-bench gate (sub-20ms p95) test-enforced. 51/51 workspace tests post-review-fix.
 - [ ] **Phase 3: install-hooks UX** — `holt install-hooks` subcommand. Read-merge-write of `~/.claude/settings.json` with `fs2` exclusive lock, JSONC round-trip via `jsonc-parser` CST (preserves comments + key order), `--dry-run` and `--print` escape hatches, `.holt.bak` backup, fsync-before-rename.
 - [ ] **Phase 4: Distribution + launch** — `dist` v0.31.0 scaffold (Linux x64, macOS x64+arm64, Windows x64 best-effort), Homebrew tap (`<user>/holt`), `cargo-binstall` metadata, MSRV 1.87 / Edition 2024 pin, README leading with asciinema/gif demo, CONTRIBUTING.md tags configured on the repo.
 
@@ -98,7 +98,7 @@ Ship a Rust shim that wraps the user's existing `statusLine.command` so Claude C
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema + supervisor substrate | 3/3 | Complete ✓ | 2026-04-28 |
-| 2. Heartbeat hook (write side) | 0/? | Not started | - |
+| 2. Heartbeat hook (write side) | 2/2 | Complete ✓ | 2026-04-28 |
 | 3. install-hooks UX | 0/? | Not started | - |
 | 4. Distribution + launch | 0/? | Not started | - |
 

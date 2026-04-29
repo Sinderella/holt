@@ -2,27 +2,27 @@
 
 **Project:** holt — Rust statusLine for Claude Code with multi-session orchestration and an ASCII otter pet (Nak)
 **Milestone:** v0.1 — Runtime hygiene wedge (the lovable MVP, target 3–4 weekends)
-**Last updated:** 2026-04-28 (Phase 1 complete)
+**Last updated:** 2026-04-28 (Phase 2 complete)
 
 ## Project Reference
 
 **Core Value:** Make Claude Code's statusLine never silently fail, never block input, and tell the user — through Nak — exactly what each of their sessions is doing.
 
-**Current focus:** Phase 2 ready to plan. The `holt-hooks` crate + `holt hook <event>` subcommand — the heartbeat write side that v1.0 orchestrator + Nak compose on top of.
+**Current focus:** Phase 3 ready to plan. The `holt install-hooks` subcommand — JSONC-aware merge of holt's hook entries into `~/.claude/settings.json` with fs2 locking, fsync-before-rename, and `--dry-run`/`--print` escape hatches.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 2 — Heartbeat hook (write side) |
+| Phase | 3 — install-hooks UX |
 | Plan | (none — phase not yet planned) |
-| Status | Phase 1 complete (verified passed; 16/24 review findings fixed); awaiting `/gsd-plan-phase 2` |
-| Progress | 1 / 4 phases complete |
+| Status | Phase 2 complete (verified passed; 11/18 review findings fixed); awaiting `/gsd-plan-phase 3` |
+| Progress | 2 / 4 phases complete |
 
 ```
 [x] Phase 1: Schema + supervisor substrate    ✓ 2026-04-28 (verified passed; 28/28 tests; review-fix all critical+warning)
-[ ] Phase 2: Heartbeat hook (write side)      ← NEXT
-[ ] Phase 3: install-hooks UX
+[x] Phase 2: Heartbeat hook (write side)      ✓ 2026-04-28 (verified passed; 51/51 tests; review-fix 11/11 critical+warning)
+[ ] Phase 3: install-hooks UX                 ← NEXT — JSONC strategy spike (Open Question carry-forward)
 [ ] Phase 4: Distribution + launch
 ```
 
@@ -30,10 +30,10 @@
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| Phases shipped | 4 | 1 |
-| v1 requirements covered | 28 / 28 | 28 mapped, 11 implemented (CORE-01..10 + HOOK-11) |
-| Cold-start overhead (macOS arm64) | < 20ms | **PASS** — `holt --self-bench --json --iterations 30` reports p95=0us, well under budget (2026-04-28) |
-| Cold-start overhead (Linux x86_64) | < 20ms | not yet measured (CI matrix runs it on every PR) |
+| Phases shipped | 4 | 2 |
+| v1 requirements covered | 28 / 28 | 28 mapped, 17 implemented (CORE-01..10 + HOOK-01..06 + HOOK-11) |
+| Cold-start overhead (macOS arm64) | < 20ms | **PASS** — `holt --self-bench` p95=0us; `holt --self-bench-hook PreToolUse` p95=9921us (D-15 hook gate, 2x headroom) |
+| Cold-start overhead (Linux x86_64) | < 20ms | CI matrix runs both gates on every PR |
 
 ## Accumulated Context
 
@@ -71,7 +71,7 @@
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-plan-phase 2` to decompose Phase 2 (Heartbeat hook write side) into 1–3 plans per coarse granularity. Note the Open Question carry-forward: capture verbatim CC v2.1.119 stdin fixtures (PreToolUse / PostToolUse / Stop) as `tests/fixtures/cc-stdin/v2.1.119.json` before Phase 2 code starts.
+**Next action:** Run `/gsd-plan-phase 3` to decompose Phase 3 (install-hooks UX) into 1–3 plans per coarse granularity. **Open Question to resolve at Phase 3 start: JSONC strategy spike** — does `json_comments` (strip-then-parse) compose safely with `jsonc-parser` CST (in-place edit)? Capture the minimal `settings.json` fixture with inline comments that exercises the merge path end-to-end.
 
 **Files to read on session resume:**
 - `/Users/thanats/projects/holt/.planning/ROADMAP.md` — phase structure + success criteria
