@@ -97,3 +97,38 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace
+
+  # D-08: dedicated MSRV gate pinned to `1.87.0` toolchain. Build-only — tests
+  # are NOT re-run here because the test-{linux,macos,windows} jobs above are
+  # already pinned to 1.87.0 and would re-cover that surface. The MSRV gate's
+  # purpose is to catch a contributor accidentally relying on a post-1.87
+  # stdlib API or syntax — `cargo build --release` is sufficient to surface
+  # those errors at compile time, and keeps CI minutes flat per CONTEXT.md
+  # D-08 rationale.
+  msrv-linux:
+    name: MSRV build (1.87.0, x86_64-unknown-linux-gnu) — REQUIRED
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --release
+
+  msrv-macos:
+    name: MSRV build (1.87.0, aarch64-apple-darwin) — REQUIRED
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --release
+
+  msrv-windows:
+    name: MSRV build (1.87.0, Windows x86_64) — best-effort (allowed-failure)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --release
