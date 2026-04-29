@@ -35,7 +35,7 @@ Sleep 5500ms
 # ─── Step 3: apply the fix — wrap with `holt run --` ───────────────────────
 Type "# Wrap it with 'holt run --'. One edit to ~/.claude/settings.json."
 Enter
-Type "$EDITOR ~/.claude/settings.json   # change command to: holt run -- bash slow-statusline.sh"
+Type "vi ~/.claude/settings.json   # change command to: holt run -- bash slow-statusline.sh"
 Enter
 Sleep 1500ms
 
