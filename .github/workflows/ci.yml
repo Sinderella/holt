@@ -39,6 +39,11 @@ jobs:
       - name: assert self-bench PASS
         run: |
           python3 -c "import json,sys; d=json.load(open('/tmp/bench.json')); sys.exit(0 if d['passed'] else 1)"
+      - name: Hook self-bench PASS gate (D-15)
+        run: ./target/release/holt --self-bench-hook PreToolUse --json --iterations 30 | tee /tmp/bench-hook.json
+      - name: assert hook self-bench PASS (D-15)
+        run: |
+          python3 -c "import json,sys; d=json.load(open('/tmp/bench-hook.json')); sys.exit(0 if d['passed'] else 1)"
 
   test-macos:
     name: test (MSRV 1.87, aarch64-apple-darwin) — REQUIRED
@@ -55,6 +60,11 @@ jobs:
       - name: assert self-bench PASS
         run: |
           python3 -c "import json,sys; d=json.load(open('/tmp/bench.json')); sys.exit(0 if d['passed'] else 1)"
+      - name: Hook self-bench PASS gate (D-15)
+        run: ./target/release/holt --self-bench-hook PreToolUse --json --iterations 30 | tee /tmp/bench-hook.json
+      - name: assert hook self-bench PASS (D-15)
+        run: |
+          python3 -c "import json,sys; d=json.load(open('/tmp/bench-hook.json')); sys.exit(0 if d['passed'] else 1)"
 
   test-windows:
     name: test (Windows x86_64) — best-effort (allowed-failure)
