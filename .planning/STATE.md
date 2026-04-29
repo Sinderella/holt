@@ -2,38 +2,39 @@
 
 **Project:** holt — Rust statusLine for Claude Code with multi-session orchestration and an ASCII otter pet (Nak)
 **Milestone:** v0.1 — Runtime hygiene wedge (the lovable MVP, target 3–4 weekends)
-**Last updated:** 2026-04-28 (Phase 2 complete)
+**Last updated:** 2026-04-28 (Phase 3 complete)
 
 ## Project Reference
 
 **Core Value:** Make Claude Code's statusLine never silently fail, never block input, and tell the user — through Nak — exactly what each of their sessions is doing.
 
-**Current focus:** Phase 3 ready to plan. The `holt install-hooks` subcommand — JSONC-aware merge of holt's hook entries into `~/.claude/settings.json` with fs2 locking, fsync-before-rename, and `--dry-run`/`--print` escape hatches.
+**Current focus:** Phase 4 ready to plan. Distribution + launch — `dist` v0.31.0 scaffold (Linux x64, macOS x64+arm64, Windows x64 best-effort), Homebrew tap, `cargo binstall` metadata, README with asciinema/gif demo, CONTRIBUTING.md issue labels.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 3 — install-hooks UX |
+| Phase | 4 — Distribution + launch |
 | Plan | (none — phase not yet planned) |
-| Status | Phase 2 complete (verified passed; 11/18 review findings fixed); awaiting `/gsd-plan-phase 3` |
-| Progress | 2 / 4 phases complete |
+| Status | Phase 3 complete (verified passed; 6/6 critical+warning review findings fixed; 5 info deferred); awaiting `/gsd-plan-phase 4` |
+| Progress | 3 / 4 phases complete |
 
 ```
 [x] Phase 1: Schema + supervisor substrate    ✓ 2026-04-28 (verified passed; 28/28 tests; review-fix all critical+warning)
 [x] Phase 2: Heartbeat hook (write side)      ✓ 2026-04-28 (verified passed; 51/51 tests; review-fix 11/11 critical+warning)
-[ ] Phase 3: install-hooks UX                 ← NEXT — JSONC strategy spike (Open Question carry-forward)
-[ ] Phase 4: Distribution + launch
+[x] Phase 3: install-hooks UX                 ✓ 2026-04-28 (verified passed; 80/80 tests; review-fix 6/6 critical+warning; all 6 hard constraints C1..C6 enforced)
+[ ] Phase 4: Distribution + launch            ← NEXT — `dist init` open question (don't copy STACK.md snippet wholesale)
 ```
 
 ## Performance Metrics
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| Phases shipped | 4 | 2 |
-| v1 requirements covered | 28 / 28 | 28 mapped, 17 implemented (CORE-01..10 + HOOK-01..06 + HOOK-11) |
+| Phases shipped | 4 | 3 |
+| v1 requirements covered | 28 / 28 | 28 mapped, 21 implemented (CORE-01..10 + HOOK-01..06 + HOOK-07..11) |
 | Cold-start overhead (macOS arm64) | < 20ms | **PASS** — `holt --self-bench` p95=0us; `holt --self-bench-hook PreToolUse` p95=9921us (D-15 hook gate, 2x headroom) |
 | Cold-start overhead (Linux x86_64) | < 20ms | CI matrix runs both gates on every PR |
+| `holt install-hooks` budget | < 500ms | **PASS** — `--dry-run` p95 within budget; 50× concurrent stress + 200× SIGKILL atomicity green |
 
 ## Accumulated Context
 
@@ -57,8 +58,8 @@
 
 ### Open Questions (from research/SUMMARY.md §5 — resolve at phase-start)
 
-- **Phase 2 start**: JSONC strategy spike. Does `json_comments` (strip-then-parse) compose safely with `jsonc-parser` CST (in-place edit)? Capture the minimal `settings.json` fixture with inline comments that exercises the merge path end-to-end. *(Note: the JSONC concern is actually load-bearing in Phase 3, not Phase 2 — see Phase 3 plan.)*
-- **Phase 3 start**: Capture verbatim CC v2.1.119+ stdin JSONs as `tests/fixtures/cc-stdin/v2.1.119.json` (PreToolUse / PostToolUse / Stop) before Phase 2 code starts. *(Note: this is actually a Phase 2 prerequisite; flag at Phase 2 plan time.)*
+- ~~**Phase 2 start**: JSONC strategy spike.~~ ✓ Resolved in Phase 3 — `jsonc-parser` 0.26.3 CST in-place edit with `is_canonical_entry` byte-equal short-circuit confirmed safe; `json_comments` strip-then-parse not used (single library is sufficient).
+- ~~**Phase 3 start**: Capture verbatim CC v2.1.119+ stdin JSONs.~~ ✓ Resolved in Phase 2 — `crates/holt-hooks/tests/fixtures/cc-stdin/v2.1.119/` corpus (PreToolUse / PostToolUse / Stop / Notification / SessionStart) committed with refresh-procedure README.
 - **Phase 4 start**: Run `dist init` to generate the canonical `dist.toml` / `dist-workspace.toml` scaffold; do not copy STACK.md snippet wholesale (MEDIUM confidence).
 
 ### Todos (carried forward across phases)
@@ -71,15 +72,17 @@
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-plan-phase 3` to decompose Phase 3 (install-hooks UX) into 1–3 plans per coarse granularity. **Open Question to resolve at Phase 3 start: JSONC strategy spike** — does `json_comments` (strip-then-parse) compose safely with `jsonc-parser` CST (in-place edit)? Capture the minimal `settings.json` fixture with inline comments that exercises the merge path end-to-end.
+**Next action:** Run `/gsd-plan-phase 4` to decompose Phase 4 (Distribution + launch) into plans. **Open Question to resolve at Phase 4 start: dist scaffold** — run `dist init` to generate the canonical `dist.toml` / `dist-workspace.toml` rather than copy STACK.md snippet wholesale (MEDIUM confidence per research/SUMMARY.md §5).
 
 **Files to read on session resume:**
-- `/Users/thanats/projects/holt/.planning/ROADMAP.md` — phase structure + success criteria
-- `/Users/thanats/projects/holt/.planning/REQUIREMENTS.md` — v1 REQ-IDs with phase mappings
+- `/Users/thanats/projects/holt/.planning/ROADMAP.md` — phase structure + success criteria (Phase 4 detailed)
+- `/Users/thanats/projects/holt/.planning/REQUIREMENTS.md` — v1 REQ-IDs with phase mappings (DIST-01..07 → Phase 4)
 - `/Users/thanats/projects/holt/.planning/PROJECT.md` — north star, constraints, key decisions
 - `/Users/thanats/projects/holt/.planning/research/SUMMARY.md` — drift since 2026-04-28, hard constraints, open questions
-- `/Users/thanats/projects/holt/.planning/phases/01-schema-supervisor-substrate/` — Phase 1 artifacts (CONTEXT, RESEARCH, plans, SUMMARY, VERIFICATION, REVIEW, REVIEW-FIX)
-- `/Users/thanats/projects/holt/crates/holt-schemas/src/{heartbeat.rs,reader.rs,writer.rs,lkg.rs,error.rs,lib.rs}` — Phase 1 keystone API (atomic_write, read_heartbeat, Heartbeat, LkgEntry, ReaderError) — Phase 2 builds on this directly
+- `/Users/thanats/projects/holt/.planning/research/STACK.md` — distribution stack (`dist` v0.31.0, Homebrew tap config, `cargo binstall` metadata)
+- `/Users/thanats/projects/holt/.planning/phases/03-install-hooks-ux/` — Phase 3 artifacts (CONTEXT, plans, SUMMARYs, VERIFICATION, REVIEW, REVIEW-FIX)
+- `/Users/thanats/projects/holt/Cargo.toml` — workspace manifest, MSRV 1.87, edition 2024
+- `/Users/thanats/projects/holt/.github/workflows/ci.yml` — existing CI matrix that Phase 4 will extend with release workflow
 - `/Users/thanats/projects/holt/docs/02-scope.md` — locked v0.1 IN/OUT
 - `/Users/thanats/projects/holt/docs/05-schemas.md` — heartbeat + pet state v1
 
