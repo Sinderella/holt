@@ -265,7 +265,7 @@ mod tests {
     ///
     /// That said — fs2's lock is per-file, so cross-path contention isn't
     /// possible. The structural fix is best validated by the cargo build
-    /// + clippy passes plus the doc-comment review. To still get a runtime
+    /// and clippy passes plus the doc-comment review. To still get a runtime
     /// signal, this test asserts the simpler invariant: a successful
     /// `acquire_settings_lock` on a brand-new path produces a 0-byte file
     /// AND the file does NOT exist BEFORE the call. Catches a regression
