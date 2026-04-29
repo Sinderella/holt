@@ -72,12 +72,23 @@ impl ResolvedTier {
 
 /// Resolve the heartbeat writer path per D-06. Returns `None` if all three
 /// tiers fail to provide a writable parent directory.
+///
+/// Each tier is probed for actual writability (CR-02): `create_dir_all`
+/// returns `Ok(())` when the directory already exists regardless of the
+/// caller's write permission, so a tier where the parent dir exists with the
+/// wrong owner / 0o700 / read-only-mount would silently win and the next
+/// `atomic_write` would fail with EACCES — burning a tier that the next-tier
+/// fallback would have served. We probe by creating a same-dir file with
+/// `create_new`; if that fails, the tier is treated as not-writable and we
+/// move on. There IS a TOCTOU window between the probe and the real write,
+/// but it's strictly an improvement over the prior code which had the same
+/// window AND failed to retry on the false-positive path.
 pub fn resolve_writer_path(stdin: &HookStdin) -> Option<ResolvedPath> {
     let sid = session_id_or_hash(stdin);
     let filename = format!("{sid}.json");
 
     if let Some(parent) = tier_xdg_runtime_dir() {
-        if std::fs::create_dir_all(&parent).is_ok() {
+        if dir_is_writable(&parent) {
             return Some(ResolvedPath {
                 path: parent.join(&filename),
                 tier: ResolvedTier::XdgRuntimeDir,
@@ -86,7 +97,7 @@ pub fn resolve_writer_path(stdin: &HookStdin) -> Option<ResolvedPath> {
     }
 
     if let Some(parent) = tier_tmpdir() {
-        if std::fs::create_dir_all(&parent).is_ok() {
+        if dir_is_writable(&parent) {
             return Some(ResolvedPath {
                 path: parent.join(&filename),
                 tier: ResolvedTier::TmpDir,
@@ -95,7 +106,7 @@ pub fn resolve_writer_path(stdin: &HookStdin) -> Option<ResolvedPath> {
     }
 
     let cache_parent = default_cache_root().join("sessions");
-    if std::fs::create_dir_all(&cache_parent).is_ok() {
+    if dir_is_writable(&cache_parent) {
         return Some(ResolvedPath {
             path: cache_parent.join(&filename),
             tier: ResolvedTier::Cache,
@@ -103,6 +114,34 @@ pub fn resolve_writer_path(stdin: &HookStdin) -> Option<ResolvedPath> {
     }
 
     None
+}
+
+/// CR-02: probe whether `parent` is actually writable by the current process.
+///
+/// `std::fs::create_dir_all(parent)` returns `Ok(())` if the directory
+/// already exists, regardless of perms — so a stale `~/.cache/holt/sessions`
+/// owned by root with 0o700 (e.g., user once ran `sudo holt`) would let the
+/// resolver pick that tier and then EACCES on the real `atomic_write`. We
+/// follow the create_dir_all with a `create_new` probe file: if THAT
+/// succeeds, the dir is writable; otherwise treat the tier as not-writable
+/// so the next-tier fallback gets a chance.
+///
+/// The probe filename is process-id-suffixed to avoid colliding with another
+/// holt instance's probe (or our own retry on a flaky NFS mount). Cleanup is
+/// best-effort — leaving a stale probe file behind is acceptable; we'll
+/// `create_new` a new one with a different PID next time.
+fn dir_is_writable(parent: &Path) -> bool {
+    if std::fs::create_dir_all(parent).is_err() {
+        return false;
+    }
+    let probe = parent.join(format!(".holt-probe.{}", std::process::id()));
+    let writable = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&probe)
+        .is_ok();
+    let _ = std::fs::remove_file(&probe); // best-effort cleanup
+    writable
 }
 
 fn tier_xdg_runtime_dir() -> Option<PathBuf> {
