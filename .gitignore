@@ -1,3 +1,6 @@
 /target
 Cargo.lock.bak
 *.holt-tmp.*
+
+# Claude Code per-user session state (not project content)
+/.claude/
