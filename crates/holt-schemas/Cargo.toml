@@ -6,6 +6,14 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
+# D-02: holt-cli is the ONLY package that produces a release artifact at v0.1.
+# This opt-out tells `dist` (cargo-dist 0.31) to skip this crate when planning
+# release artifacts, even if it grows a `[[bin]]` later. Library crates ship
+# nothing user-facing in v0.1; their public APIs (Heartbeat) are still
+# `#[non_exhaustive]` and we explicitly defer crates.io publication to v0.5+.
+[package.metadata.dist]
+dist = false
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true

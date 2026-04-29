@@ -6,5 +6,9 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
+# D-02: holt-cli is the ONLY package that produces a release artifact at v0.1.
+[package.metadata.dist]
+dist = false
+
 [dependencies]
 holt-schemas = { path = "../holt-schemas" }

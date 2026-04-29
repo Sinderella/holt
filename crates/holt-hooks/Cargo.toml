@@ -11,6 +11,14 @@ repository.workspace = true
 # `[[test]]` blocks at the bottom of this manifest.
 autotests = false
 
+# D-02: holt-cli is the ONLY package that produces a release artifact at v0.1.
+# Without this opt-out, `dist` (cargo-dist 0.31) would ship the
+# `sigkill_test_driver` binary declared below as a release artifact for all 5
+# platforms — that driver is a Phase 2 D-13 SIGKILL atomicity test fixture, NOT
+# a user-facing tool, and shipping it would be both wrong and confusing.
+[package.metadata.dist]
+dist = false
+
 [dependencies]
 # Phase 1 keystone — Heartbeat type, atomic_write helper, read_heartbeat (used in tests).
 holt-schemas = { path = "../holt-schemas" }
