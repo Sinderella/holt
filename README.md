@@ -2,12 +2,48 @@
 
 > *Where your Nak lives.*
 
-A small Rust statusLine for Claude Code, with a small otter in it.
+A small Rust statusLine for Claude Code that wraps your existing config and tells you when your bar is silently failing.
+
+![demo](assets/demo.gif)
+
+## Install
+
+```bash
+cargo binstall holt   # any platform with cargo + cargo-binstall
+# Or grab a prebuilt binary from https://github.com/Sinderella/holt/releases
+```
+
+On macOS, the manual-download path may trip Gatekeeper because v0.1 binaries are unsigned. Strip the quarantine flag once after extracting the tarball:
+
+```bash
+xattr -d com.apple.quarantine /usr/local/bin/holt
+```
+
+(Apple Developer Program enrollment for native notarization is on the v0.1.x roadmap.)
+
+**Platform tier at v0.1:** Linux x86_64 and macOS (x86_64 + Apple Silicon) are tier-1; Windows x64 is best-effort and may lag releases. Windows is promoted to tier-1 when ≥10 [Windows-tagged issues](https://github.com/Sinderella/holt/issues?q=is%3Aissue+label%3Awindows) are filed against the repo OR a Windows contributor steps up. See [`docs/02-scope.md`](docs/02-scope.md) for the full v0.1 scope statement and the trigger criteria.
+
+A Homebrew tap (`brew install Sinderella/holt`) is **deferred to v0.1.x** — re-added once macOS Gatekeeper friction is reported by ≥3 users or Apple notarization becomes worthwhile. See [`.planning/REQUIREMENTS.md`](.planning/REQUIREMENTS.md) (DIST-02) for the deferral rationale.
+
+### First-run
+
+After install, wire holt into Claude Code's hook system:
+
+```bash
+holt install-hooks --dry-run        # shows the diff vs your current ~/.claude/settings.json
+holt install-hooks                  # applies the merge once the diff looks correct
+```
+
+`holt install-hooks` mutates `~/.claude/settings.json` atomically — it acquires an exclusive lock, writes a `.holt.bak` backup, fsync-then-renames the merged file in place, and never half-writes. JSONC comments and key order in your existing settings are preserved. Use `--print` instead of the default to emit just the JSON snippet for manual paste.
+
+### Reporting issues
+
+When you file an issue, label it so it routes correctly: [`bug`](https://github.com/Sinderella/holt/labels/bug) for breakage, [`feature`](https://github.com/Sinderella/holt/labels/feature) for requests, [`question`](https://github.com/Sinderella/holt/labels/question) for design discussion, [`windows`](https://github.com/Sinderella/holt/labels/windows) (counts toward the Windows-tier-1 trigger), [`pet`](https://github.com/Sinderella/holt/labels/pet) for Nak / sprites / diary, [`runtime`](https://github.com/Sinderella/holt/labels/runtime) for the supervisor / breach log / `holt doctor`, [`orchestrator`](https://github.com/Sinderella/holt/labels/orchestrator) for cross-session / heartbeat / peer awareness, [`good first issue`](https://github.com/Sinderella/holt/labels/good%20first%20issue), or [`help wanted`](https://github.com/Sinderella/holt/labels/help%20wanted). Full contribution guide in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ```
 auth/feat  (•ω•)..>>  [Read]  $0.34   [3/7 you're up]   billing/fix (>.<)*
 ```
-*Demo coming. Above is what the bar will look like at v1.0. The leftmost segment (`auth/feat`) is the worktree label — `repo/branch`. Your Nak (calm, leaning forward) is the otter in your current session, with two peer sessions trailing behind as dots. `[3/7 you're up]` reads as: three of seven peer sessions are waiting on you, and you're at the head of queue. The exhausted Nak on the right is your `billing/fix` session — eyes drooping because it's at 91% context.*
+*Above is what the bar will look like at v1.0. The leftmost segment (`auth/feat`) is the worktree label — `repo/branch`. Your Nak (calm, leaning forward) is the otter in your current session, with two peer sessions trailing behind as dots. `[3/7 you're up]` reads as: three of seven peer sessions are waiting on you, and you're at the head of queue. The exhausted Nak on the right is your `billing/fix` session — eyes drooping because it's at 91% context.*
 
 ---
 
@@ -38,18 +74,6 @@ holt fixes the runtime, corrects the data, and surfaces multi-session state wher
 ## Privacy
 
 No telemetry. holt runs entirely on your machine. Roadmap features gate on GitHub issue counts, not analytics.
-
-## Install
-
-```bash
-cargo install holt          # any Rust toolchain
-cargo binstall holt         # prebuilt binaries (no compile)
-brew install <user>/tap/holt   # tap link coming
-```
-
-**Platform support at v0.1:** Linux and macOS only. Windows is deferred — the cross-platform process-supervision work (JobObject, ConPTY) is real engineering and would compromise the v0.1 timeline. If you're on Windows and want this to work, file an issue or send a PR — we'll commit to Windows when there's a real signal of demand.
-
-**Don't want the otter?** `holt install --no-pet` runs the full runtime supervisor and orchestrator without Nak. The diagnostic, breach log, and peer-session attention queue all work without her. Nak is the project's identity, but pure utility is one flag away.
 
 ## Status
 
