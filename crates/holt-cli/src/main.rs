@@ -19,6 +19,7 @@
 mod cli;
 mod hook;
 mod install_hooks;
+mod install_hooks_cmd;
 mod run;
 mod self_bench;
 mod stdin;
@@ -55,9 +56,12 @@ fn main() {
                 wrapped,
             }) => run::run(timeout, session_id, wrapped),
             Some(cli::Command::Hook { event }) => hook::run(event.into_lib()),
+            Some(cli::Command::InstallHooks { dry_run, print }) => {
+                install_hooks_cmd::run(dry_run, print)
+            }
             None => {
                 eprintln!(
-                    "holt: no subcommand. Try `holt --help`, `holt --self-bench`, or `holt hook <event>`."
+                    "holt: no subcommand. Try `holt --help`, `holt --self-bench`, `holt hook <event>`, or `holt install-hooks`."
                 );
                 2
             }

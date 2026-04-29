@@ -103,10 +103,7 @@ fn upsert_event(hooks_obj: &CstObject, entry: &HoltHookEntry) {
     match hooks_obj.array_value(entry.event) {
         None => {
             // No existing array — create with one element (holt's).
-            hooks_obj.append(
-                entry.event,
-                CstInputValue::Array(vec![canonical()]),
-            );
+            hooks_obj.append(entry.event, CstInputValue::Array(vec![canonical()]));
         }
         Some(arr) => {
             let mut handled = false;
@@ -140,7 +137,10 @@ fn upsert_event(hooks_obj: &CstObject, entry: &HoltHookEntry) {
 ///   `{ "matcher": "*", "hooks": [ { "type": "command", "command": "<command>" } ] }`
 fn canonical_entry_value(command: &str) -> CstInputValue {
     CstInputValue::Object(vec![
-        ("matcher".to_string(), CstInputValue::String("*".to_string())),
+        (
+            "matcher".to_string(),
+            CstInputValue::String("*".to_string()),
+        ),
         (
             "hooks".to_string(),
             CstInputValue::Array(vec![CstInputValue::Object(vec![

@@ -19,17 +19,30 @@
 //! shouldn't accumulate cruft. NOT named `.bak` (vim's namespace per
 //! research/SUMMARY.md §3 C3).
 
-// Wired into the binary in plan 03-02 — until then, the public-but-unused
-// re-exports below are intentional (they form the stable surface for the
-// CLI dispatcher). `dead_code` covers everything except the re-exports
-// themselves; `unused_imports` covers those.
-#![allow(dead_code, unused_imports)]
+// Plan 03-02 wired the public surface into `crates/holt-cli/src/install_hooks_cmd.rs`,
+// so most re-exports are now actively consumed. A small number of struct fields
+// (e.g. `LockError::Io::path`, `CommitError::BackupWrite::path`) only surface via
+// `Display` impls on the `thiserror` derive — clippy's `dead_code` lint counts
+// those reads but rustc's broader `dead_code` does not always; keep the allow
+// scoped to the module so legitimate user-facing error fields are not stripped
+// by overzealous "field is never read" warnings.
+#![allow(dead_code)]
 
+pub mod diff;
 mod entries;
 mod lock;
 mod merge;
+pub mod print;
 
-pub use entries::{HOLT_HOOK_DETECTION_SUBSTR, HOLT_HOOK_ENTRIES, HoltHookEntry};
+// `HOLT_HOOK_DETECTION_SUBSTR` and `HoltHookEntry` are re-exported as part of
+// the documented public surface (used internally by `merge.rs` and `print.rs`
+// via `super::entries::*`). External consumers — the dispatcher in
+// `install_hooks_cmd.rs`, plus future plans that extend the install-hooks API —
+// reach them through this `pub use`. The `#[allow]` keeps the re-exports
+// stable without triggering `unused_imports` for the binary build.
+pub use entries::HOLT_HOOK_ENTRIES;
+#[allow(unused_imports)]
+pub use entries::{HOLT_HOOK_DETECTION_SUBSTR, HoltHookEntry};
 pub use lock::{LockError, acquire_settings_lock};
 pub use merge::{MergeError, MergeOutput, merge_settings};
 

@@ -52,8 +52,7 @@ fn fixture_corpus_matches_expected_byte_for_byte() {
     for s in SCENARIOS {
         let input = read(&format!("{s}.input.json"));
         let expected = read(&format!("{s}.expected.json"));
-        let out = merge::merge_settings(&input)
-            .unwrap_or_else(|e| panic!("merge {s} failed: {e}"));
+        let out = merge::merge_settings(&input).unwrap_or_else(|e| panic!("merge {s} failed: {e}"));
         assert_eq!(
             out.bytes, expected,
             "fixture `{s}` did not round-trip to expected output\n\

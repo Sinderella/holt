@@ -60,6 +60,23 @@ pub enum Command {
         /// PreCompact is reserved for v1.0 per docs/02-scope.md.
         event: HookEventArg,
     },
+    /// Phase 3 D-16: idempotently merge holt's 5 hook entries into ~/.claude/settings.json.
+    ///
+    /// Default mode acquires an fs2 exclusive lock, writes a `.holt.bak` backup, then
+    /// atomically writes the merged file (fsync-before-rename). `--dry-run` prints a
+    /// unified diff to stdout without touching settings.json. `--print` emits just the
+    /// JSON snippet for manual paste. `--dry-run` and `--print` are mutually exclusive.
+    /// The single backup at `<settings>.holt.bak` is overwritten on each run (not a
+    /// versioned chain).
+    InstallHooks {
+        /// Print a unified diff of what would change; do not modify settings.json (D-11).
+        #[arg(long, conflicts_with = "print")]
+        dry_run: bool,
+        /// Print just the holt hook-entry JSON snippet for manual paste; do not modify
+        /// settings.json (D-12).
+        #[arg(long)]
+        print: bool,
+    },
 }
 
 /// Clap-side mirror of `holt_hooks::HookEvent` so we can derive `ValueEnum`.
