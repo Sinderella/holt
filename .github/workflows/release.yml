@@ -108,6 +108,17 @@ jobs:
       # - N "local" tasks that build each platform's binaries and platform-specific installers
       matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
     runs-on: ${{ matrix.runner }}
+    # D-03: Windows is best-effort at v0.1 — a Windows build failure must NOT
+    # block the Linux + macOS-x64 + macOS-arm64 release. Setting
+    # `continue-on-error` per matrix instance via expression keeps the Linux
+    # and macOS instances strictly required (continue-on-error stays false for
+    # them) while the Windows instance is tolerated. The downstream `host` job
+    # (line 221) gates on `needs.build-local-artifacts.result == 'success'`;
+    # because `continue-on-error: true` masks per-instance failure to success
+    # at the needs-level, the host job will run and publish the Linux + macOS
+    # tarballs even if Windows failed. Linux arm64 + Windows arm64 are not in
+    # the matrix at v0.1 per docs/02-scope.md.
+    continue-on-error: ${{ contains(matrix.targets, 'x86_64-pc-windows-msvc') }}
     container: ${{ matrix.container && matrix.container.image || null }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

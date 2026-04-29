@@ -9,9 +9,24 @@ cargo-dist-version = "0.31.0"
 ci = "github"
 # The installers to generate for each app
 installers = ["shell", "powershell", "homebrew"]
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# Target platforms to build apps for (Rust target-triple syntax).
+# D-03: exactly 4 targets at v0.1. Linux arm64 deferred to v0.1.x per
+# docs/02-scope.md; Windows arm64 not on the table at v0.1. The Windows
+# matrix entry is marked `continue-on-error: true` in release.yml so a
+# Windows build failure does NOT block the Linux + macOS-x64 + macOS-arm64
+# release-success gate (`Linux ∧ macOS-x64 ∧ macOS-arm64`).
+targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-pc-windows-msvc"]
 # Path that installers should place binaries in
 install-path = "CARGO_HOME"
 # Whether to install an updater program
 install-updater = false
+# D-03: `release.yml` carries a hand-edited
+# `continue-on-error: ${{ contains(matrix.targets, 'x86_64-pc-windows-msvc') }}`
+# expression on the `build-local-artifacts` job (Windows allow-failure half of
+# D-03). dist's drift check would otherwise revert the edit on the next
+# `dist generate`. The narrow `["ci"]` whitelist keeps everything else in the
+# release workflow regenerable; only the CI scaffold is allowed to differ from
+# the dist-emitted baseline. Future dist version bumps may obviate this — if
+# cargo-dist gains a per-target allow-failure config setting, drop this and
+# move the allow-failure declaration into the toml.
+allow-dirty = ["ci"]
