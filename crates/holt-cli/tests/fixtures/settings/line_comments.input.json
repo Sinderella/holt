@@ -1,0 +1,5 @@
+// User's settings file
+{
+  "statusLine": { "command": "ccstatusline" }
+  // my hook
+}
