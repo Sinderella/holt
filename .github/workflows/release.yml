@@ -216,17 +216,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Locate the freshly-built binary. dist 0.31 stages the binary under
-          # target/<triple>/release/ (or target/release/ for the host triple).
-          # Restrict the find to the canonical release path (and explicitly to
-          # the holt or holt.exe basename) so we don't pick up a build artifact
-          # from a debug profile or an unrelated subdir if the build layout
-          # ever changes — WR-03 robustness fix.
+          # Locate the freshly-built binary. dist 0.31 builds with its OWN cargo
+          # profile named "dist" (NOT release), so the binary lands at
+          # target/<triple>/dist/holt and is staged at
+          # target/distrib/holt-cli-<triple>/holt before tarballing. Look for
+          # the staged path first (most authoritative — it's what ships) and
+          # fall back to the dist-profile path. Earlier attempts at this step
+          # used `*/release/holt` which never matches because dist doesn't use
+          # the release profile.
           BIN=$(find target -type f \
-                  \( -path '*/release/holt' -o -path '*/release/holt.exe' \) \
+                  \( -path '*/distrib/holt-cli-*/holt' \
+                  -o -path '*/distrib/holt-cli-*/holt.exe' \
+                  -o -path '*/dist/holt' \
+                  -o -path '*/dist/holt.exe' \) \
                   -perm -u+x 2>/dev/null | head -1)
           if [ -z "$BIN" ]; then
-            echo "FAIL: could not locate built holt binary under target/*/release/ or target/release/"
+            echo "FAIL: could not locate built holt binary under target/distrib/ or target/*/dist/"
             find target -maxdepth 4 -type f -name 'holt*' 2>/dev/null || true
             exit 1
           fi
