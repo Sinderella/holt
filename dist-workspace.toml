@@ -25,12 +25,15 @@ ci = "github"
 # becomes worth the cost for native notarization.
 installers = ["shell", "powershell"]
 # Target platforms to build apps for (Rust target-triple syntax).
-# D-03: exactly 4 targets at v0.1. Linux arm64 deferred to v0.1.x per
-# docs/02-scope.md; Windows arm64 not on the table at v0.1. The Windows
-# matrix entry is marked `continue-on-error: true` in release.yml so a
-# Windows build failure does NOT block the Linux + macOS-x64 + macOS-arm64
-# release-success gate (`Linux ∧ macOS-x64 ∧ macOS-arm64`).
-targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-pc-windows-msvc"]
+# D-03 (revised 2026-04-30): rc.1 ships macOS-only, matching the CI deferral
+# (`v0.5+1.0-prep`). Linux x64 + Windows x64 builds were dropping the matrix
+# anyway pre-tag because the CI side hadn't validated them since the GitHub
+# repo was created. Restore the full 4-target list when re-enabling auto-fire
+# in CI for 1.0 prep:
+#   targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin",
+#              "aarch64-apple-darwin", "x86_64-pc-windows-msvc"]
+# Until then, both Apple targets ship: x86_64 (Intel) + arm64 (Apple Silicon).
+targets = ["x86_64-apple-darwin", "aarch64-apple-darwin"]
 # Path that installers should place binaries in
 install-path = "CARGO_HOME"
 # Whether to install an updater program
