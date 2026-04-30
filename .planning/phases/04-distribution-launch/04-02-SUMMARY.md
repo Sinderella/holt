@@ -79,7 +79,7 @@ D-06 (vhs gif), D-07 (platform tier link), D-09 (label apply script), D-10 (RC1 
 
 ### D-04 + DIST-02 — Homebrew tap deferred (handled by AMENDMENT BANNER)
 
-The plan body originally specified a 3-command install block (brew + binstall + GitHub release) and a homebrew-holt repo bootstrap step in RC1-CHECKLIST.md. The 2026-04-29 AMENDMENT BANNER (committed in `83c5ba8` BEFORE Plan 04-02 execution) reduced these to:
+The plan body originally specified a 3-command install block (brew + binstall + GitHub release) and a homebrew-holt repo bootstrap step in RC1-CHECKLIST.md. The 2026-04-29 AMENDMENT BANNER (committed BEFORE Plan 04-02 execution) reduced these to:
 - README install block: 2 commands (binstall + GitHub release direct download with `xattr -d com.apple.quarantine` workaround for macOS)
 - RC1-CHECKLIST.md: no homebrew-holt repo bootstrap step; no tap formula post-tag verification
 

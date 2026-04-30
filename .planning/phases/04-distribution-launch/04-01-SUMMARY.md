@@ -12,7 +12,7 @@ decisions_implemented:
   - D-01: scaffold via `dist init` (committed verbatim before customization)
   - D-02: scope dist artifact builds to holt-cli only; publish = false on all 6 source crates; [package.metadata.dist] dist = true on holt-cli (added post-tap-drop so publish=false doesn't hide the binary from dist)
   - D-03: 4-target matrix (Linux x64, macOS x64+arm64, Windows x64) with Windows `continue-on-error: ${{ contains(matrix.targets, 'x86_64-pc-windows-msvc') }}`
-  - D-04: ~~Homebrew tap = Sinderella/homebrew-holt~~ → DEFERRED to v0.1.x (commit 97a8edd) — see AMENDMENT BANNER on 04-CONTEXT.md
+  - D-04: ~~Homebrew tap = Sinderella/homebrew-holt~~ → DEFERRED to v0.1.x — see AMENDMENT BANNER on 04-CONTEXT.md
   - D-05: cargo binstall metadata via dist auto-generation (manual fallback documented; binstall dry-run probe deferred to RC1-CHECKLIST since no GitHub release exists yet)
   - D-08: MSRV CI job pinned to 1.87.0, build-only, REQUIRED on Linux+macOS, ALLOWED-FAILURE on Windows
   - D-11: tag-push trigger pattern `v*` (broader than dist's default; v0.1.0-rc.1 matches)
@@ -33,43 +33,43 @@ key_files:
     - crates/holt-schemas/Cargo.toml (publish = false; [package.metadata.dist] dist = false)
     - crates/holt-supervisor/Cargo.toml (publish = false; [package.metadata.dist] dist = false)
 commits:
-  - "6e91044 chore(workspace): inherit repository field on all 6 crates (D-02 dist prereq)"
-  - "4af436e chore(dist): scaffold via dist init v0.31.0"
-  - "b6ce163 chore(dist): scope artifact builds to holt-cli only (D-02)"
-  - "a622134 chore(dist): trim to 4 targets + mark Windows continue-on-error (D-03)"
-  - "935a2ed chore(dist): pin Homebrew tap to Sinderella/homebrew-holt (D-04) — REVERTED in 8fcec20"
-  - "2d3787e chore(dist): confirm SHA-256 checksums enabled (D-12)"
-  - "e15cdc0 chore(workspace): publish = false on all 6 crates (D-02)"
-  - "2b94d1d chore(release): normalize trigger to v* + document customizations (D-11, D-03)"
-  - "b5bbfe8 ci(msrv): add 1.87.0 build-only matrix (D-08)"
-  - "59cdb36 fix(holt-cli): unbreak doc_lazy_continuation lint in lock.rs prose (Rule 3)"
-  - "6e35e49 test(version): assert --version against CARGO_PKG_VERSION (D-13)"
-  - "8fcec20 chore(dist): drop Homebrew tap from v0.1, defer to v0.1.x (D-04 revised)"
-  - "4320028 docs(planning): mark Homebrew tap deferred to v0.1.x — amendment banners"
+  - "chore(workspace): inherit repository field on all 6 crates (D-02 dist prereq)"
+  - "chore(dist): scaffold via dist init v0.31.0"
+  - "chore(dist): scope artifact builds to holt-cli only (D-02)"
+  - "chore(dist): trim to 4 targets + mark Windows continue-on-error (D-03)"
+  - "chore(dist): pin Homebrew tap to Sinderella/homebrew-holt (D-04) — REVERTED by chore(dist): drop Homebrew tap"
+  - "chore(dist): confirm SHA-256 checksums enabled (D-12)"
+  - "chore(workspace): publish = false on all 6 crates (D-02)"
+  - "chore(release): normalize trigger to v* + document customizations (D-11, D-03)"
+  - "ci(msrv): add 1.87.0 build-only matrix (D-08)"
+  - "fix(holt-cli): unbreak doc_lazy_continuation lint in lock.rs prose"
+  - "test(version): assert --version against CARGO_PKG_VERSION (D-13)"
+  - "chore(dist): drop Homebrew tap from v0.1, defer to v0.1.x (D-04 revised)"
+  - "docs(planning): mark Homebrew tap deferred to v0.1.x — amendment banners"
 ---
 
 # Plan 04-01 Summary: dist scaffold + MSRV CI gate + version smoke test
 
 ## Tasks completed
 
-| # | Task | Status | Commit ([redacted]) |
-|---|------|--------|----|
-| 1 | Pre-flight `dist` install audit (cargo install dist; binary is `dist`, crate is `cargo-dist`) | ✓ | (no commit; documented in next commit body) |
-| 2 | `dist init` scaffold + commit verbatim baseline | ✓ | `4af436e` |
-| 3a | Customize dist-workspace.toml: scope to holt-cli only | ✓ | `b6ce163` |
-| 3b | Customize: trim to 4 targets + Windows continue-on-error | ✓ | `a622134` |
-| 3c | Customize: ~~pin Homebrew tap~~ (later reverted) | ✓→reverted | `935a2ed` → reverted by `97a8edd` |
-| 3d | Customize: confirm SHA-256 checksums | ✓ | `2d3787e` |
-| 4a | publish = false audit on all 6 source crates | ✓ | `e15cdc0` |
-| 4b | repository.workspace = true on all 6 crates (Rule-3 prereq for dist) | ✓ | `6e91044` |
-| 5 | Sanity-check release.yml trigger + Windows allow-fail | ✓ | `2b94d1d` |
-| 6 | Add MSRV 1.87.0 build-only CI job | ✓ | `b5bbfe8` |
-| 7 | Replace version_smoke.rs with CARGO_PKG_VERSION assertion (D-13) | ✓ | `6e35e49` |
-| 8 | Local `cargo binstall holt --dry-run` smoke (informational) | partial | (deferred to RC1-CHECKLIST — no GitHub release exists yet) |
-| 9 | End-of-plan green-light gate: full hard-constraint suite + lint + fmt + self-benches | ✓ | (no commit; verification only — see "Verification" below) |
-| follow-up | Drop Homebrew tap from v0.1 (D-04 revised) | ✓ | `97a8edd` |
-| follow-up | Amendment banners on planning docs (CONTEXT, plan 04-02, REQUIREMENTS) | ✓ | `83c5ba8` |
-| follow-up | Rule-3 fix: doc_lazy_continuation lint in lock.rs prose | ✓ | `59cdb36` |
+| # | Task | Status |
+|---|------|--------|
+| 1 | Pre-flight `dist` install audit (cargo install dist; binary is `dist`, crate is `cargo-dist`) | ✓ (documented in next commit body) |
+| 2 | `dist init` scaffold + commit verbatim baseline | ✓ |
+| 3a | Customize dist-workspace.toml: scope to holt-cli only | ✓ |
+| 3b | Customize: trim to 4 targets + Windows continue-on-error | ✓ |
+| 3c | Customize: ~~pin Homebrew tap~~ (later reverted) | ✓ → reverted by the D-04 drop commit |
+| 3d | Customize: confirm SHA-256 checksums | ✓ |
+| 4a | publish = false audit on all 6 source crates | ✓ |
+| 4b | repository.workspace = true on all 6 crates (Rule-3 prereq for dist) | ✓ |
+| 5 | Sanity-check release.yml trigger + Windows allow-fail | ✓ |
+| 6 | Add MSRV 1.87.0 build-only CI job | ✓ |
+| 7 | Replace version_smoke.rs with CARGO_PKG_VERSION assertion (D-13) | ✓ |
+| 8 | Local `cargo binstall holt --dry-run` smoke (informational) | partial — deferred to RC1-CHECKLIST since no GitHub release exists yet |
+| 9 | End-of-plan green-light gate: full hard-constraint suite + lint + fmt + self-benches | ✓ (verification only — see "Verification" below) |
+| follow-up | Drop Homebrew tap from v0.1 (D-04 revised) | ✓ |
+| follow-up | Amendment banners on planning docs (CONTEXT, plan 04-02, REQUIREMENTS) | ✓ |
+| follow-up | Rule-3 fix: doc_lazy_continuation lint in lock.rs prose | ✓ |
 
 ## Verification (final, post-tap-drop)
 
@@ -104,11 +104,11 @@ DIST-02 marked deferred-to-v0.1.x in REQUIREMENTS.md. Trigger criteria for revis
 
 ## Notes & gotchas
 
-- **`dist` binary vs `cargo-dist` crate.** The crates.io crate is still named `cargo-dist` v0.31.0 but the installed binary is named `dist`. Documented in commit body of `4af436e`. Install command: `cargo install cargo-dist --locked` → produces `~/.cargo/bin/dist`.
+- **`dist` binary vs `cargo-dist` crate.** The crates.io crate is still named `cargo-dist` v0.31.0 but the installed binary is named `dist`. Documented in the `dist init` scaffold commit body. Install command: `cargo install cargo-dist --locked` → produces `~/.cargo/bin/dist`.
 - **`dist init`'s `-t` whitelist semantics.** `dist init -t x86_64-unknown-linux-gnu -t x86_64-apple-darwin -t aarch64-apple-darwin -t x86_64-pc-windows-msvc` ADDS targets to the default set rather than replacing it; the resulting array contained `aarch64-unknown-linux-gnu` (Linux arm64) which is out-of-scope per `docs/02-scope.md`. Task 3b trimmed to the 4 D-03 targets explicitly.
-- **`publish = false` blocks dist visibility.** Adding `publish = false` to `holt-cli/Cargo.toml` (D-02) caused `dist plan` to report "no distable binaries". Solved by adding `[package.metadata.dist] dist = true` (commit `97a8edd`) — explicit opt-in for dist while remaining unpublished on crates.io.
-- **`repository.workspace = true` on all 6 crates is a `dist generate` prerequisite.** Without it, `dist generate` refused to emit `release.yml` because workspace inheritance of `repository` is not auto-resolved by dist. Hoisted as a Rule-3 fix in commit `6e91044` ahead of Task 4's `publish = false` audit.
-- **`sigkill_test_driver` `[[bin]]` leak.** `crates/holt-hooks/Cargo.toml` declares a test driver binary for the Phase 2 D-13 SIGKILL atomicity test. dist 0.31 ships any `[[bin]]` it finds; without `[package.metadata.dist] dist = false` on `holt-hooks`, dist would have published a `holt-hooks-{platform}.tar.gz` artifact for every release. Closed in commit `b6ce163` (Plan 04-01 Task 3a).
+- **`publish = false` blocks dist visibility.** Adding `publish = false` to `holt-cli/Cargo.toml` (D-02) caused `dist plan` to report "no distable binaries". Solved by adding `[package.metadata.dist] dist = true` in the D-04 tap-drop commit — explicit opt-in for dist while remaining unpublished on crates.io.
+- **`repository.workspace = true` on all 6 crates is a `dist generate` prerequisite.** Without it, `dist generate` refused to emit `release.yml` because workspace inheritance of `repository` is not auto-resolved by dist. Hoisted as a Rule-3 fix ahead of Task 4's `publish = false` audit.
+- **`sigkill_test_driver` `[[bin]]` leak.** `crates/holt-hooks/Cargo.toml` declares a test driver binary for the Phase 2 D-13 SIGKILL atomicity test. dist 0.31 ships any `[[bin]]` it finds; without `[package.metadata.dist] dist = false` on `holt-hooks`, dist would have published a `holt-hooks-{platform}.tar.gz` artifact for every release. Closed in Task 3a.
 - **`allow-dirty = ["ci"]` in dist-workspace.toml.** Protects the hand-edits in `release.yml` (Windows continue-on-error per D-03; `--version` parity check per D-14 added in Plan 04-02; Homebrew job removal comment per D-04 revision) from being clobbered on a deliberate `dist generate --mode ci` run. Future maintainers re-applying generation must temporarily comment out this line, regen, then re-apply the hand-edits — procedure documented in dist-workspace.toml's D-03 comment block.
 
 ## Next
