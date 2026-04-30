@@ -113,7 +113,7 @@ DIST-02 marked deferred-to-v0.1.x in REQUIREMENTS.md. Trigger criteria for revis
 
 ## git-history-cleanup rewrite (2026-04-29)
 
-99 commits in history were rewritten via `git-history-cleanup` mid-plan to fix a misidentified GitHub username (`Sinderella` → `Sinderella`) and author (Sinderella @ domain → Sinderella @ rawsec@gmail.com). All commit hashes referenced in this summary are POST-rewrite. The [redacted] hashes are preserved as history-rewrite `commit-oid` headers in the new fast-export but are not addressable from `git log`. Backup of [redacted] `.git/` retained at `/tmp/local-backup/git-backup-20260429-132810.tgz` (1.2 MB). Commit signatures (commit signing) were stripped by the rewrite — all 99 commits now show `N` per `git log --pretty='%G?'`. Re-signing deferred; new commits are signed normally.
+99 commits in history were rewritten via `git-history-cleanup` mid-plan to fix a misidentified GitHub username (`Sinderella` → `Sinderella`) and normalize the author identity to `Sinderella`. All commit hashes referenced in this summary are POST-rewrite. The [redacted] hashes are preserved as history-rewrite `commit-oid` headers in the new fast-export but are not addressable from `git log`. Backup of [redacted] `.git/` retained at `/tmp/local-backup/` (local-only). Commit signatures (commit signing) were stripped by the rewrite — all 99 commits show `N` per `git log --pretty='%G?'`. Re-signing deferred; new commits are signed normally.
 
 ## Next
 

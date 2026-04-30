@@ -68,7 +68,7 @@ commits: ~110 (post history-rewrite rewrite)
 
 - **D-08 narrowing (Phase 2):** `git rev-parse` heuristic for `cwd_label` deferred to v1.0; shelling out to git on the render path would violate D-15 budget.
 - **D-04 revision (Phase 4, AMENDMENT 2026-04-29):** Homebrew tap dropped from v0.1; deferred to v0.1.x. Trigger criteria for revisiting documented in 3 places (`dist-workspace.toml`, `release.yml` route-finder, `04-CONTEXT.md` AMENDMENT BANNER).
-- **`git-history-cleanup` rewrite (2026-04-29):** All 99 commits rewritten to fix repo identity (`Sinderella/holt` → `Sinderella/holt`) and author (domain email → rawsec@gmail.com). Commit signatures stripped (history-rewrite behavior); resume signing on new commits.
+- **`git-history-cleanup` rewrite (2026-04-29):** All 99 commits rewritten to fix the repo identity (`Sinderella/holt` → `Sinderella/holt`) and normalize the author identity to `Sinderella`. Commit signatures stripped (history-rewrite behavior); resume signing on new commits.
 
 ## Maintainer handoff (RC1-CHECKLIST.md, 153 LOC)
 
