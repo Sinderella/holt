@@ -12,9 +12,8 @@ ci = "github"
 # `.sha256` sidecar for each of the 4 platform tarballs plus a top-level
 # `sha256.sum` aggregate. No explicit `checksum = "sha256"` toml setting is
 # needed. GPG signing is intentionally not enabled at v0.1; we accept
-# commit signing commit-time signing as release identity per CONTEXT.md
-# D-12 and ROADMAP success criterion #1. Revisit if/when ≥3 issues request
-# GPG-signed artifacts.
+# commit-time signing as release identity per CONTEXT.md D-12 and ROADMAP
+# success criterion #1. Revisit if/when ≥3 issues request GPG-signed artifacts.
 # The installers to generate for each app.
 # D-04 (revised 2026-04-29): Homebrew tap deferred to v0.1.x. v0.1 ships shell
 # (curl|sh) + powershell installer scripts and prebuilt GitHub-release tarballs

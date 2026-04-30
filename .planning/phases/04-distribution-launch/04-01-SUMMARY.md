@@ -33,19 +33,19 @@ key_files:
     - crates/holt-schemas/Cargo.toml (publish = false; [package.metadata.dist] dist = false)
     - crates/holt-supervisor/Cargo.toml (publish = false; [package.metadata.dist] dist = false)
 commits:
-  - "5754934 → 6e91044 chore(workspace): inherit repository field on all 6 crates (D-02 dist prereq) [history-rewrite rewrite hash: 6e91044]"
-  - "9402092 → 4af436e chore(dist): scaffold via dist init v0.31.0"
-  - "459813a → b6ce163 chore(dist): scope artifact builds to holt-cli only (D-02)"
-  - "735970e → a622134 chore(dist): trim to 4 targets + mark Windows continue-on-error (D-03)"
-  - "b9f09ab → 935a2ed chore(dist): pin Homebrew tap to Sinderella/homebrew-holt (D-04) — REVERTED in 97a8edd"
-  - "56e0875 → 2d3787e chore(dist): confirm SHA-256 checksums enabled (D-12)"
-  - "2e842e5 → e15cdc0 chore(workspace): publish = false on all 6 crates (D-02)"
-  - "b9cf375 → 2b94d1d chore(release): normalize trigger to v* + document customizations (D-11, D-03)"
-  - "cd29e4a → b5bbfe8 ci(msrv): add 1.87.0 build-only matrix (D-08)"
-  - "e6c9f6e → 59cdb36 fix(holt-cli): unbreak doc_lazy_continuation lint in lock.rs prose (Rule 3)"
-  - "5f92481 → 6e35e49 test(version): assert --version against CARGO_PKG_VERSION (D-13)"
-  - "97a8edd chore(dist): drop Homebrew tap from v0.1, defer to v0.1.x (D-04 revised)"
-  - "83c5ba8 docs(planning): mark Homebrew tap deferred to v0.1.x — amendment banners"
+  - "6e91044 chore(workspace): inherit repository field on all 6 crates (D-02 dist prereq)"
+  - "4af436e chore(dist): scaffold via dist init v0.31.0"
+  - "b6ce163 chore(dist): scope artifact builds to holt-cli only (D-02)"
+  - "a622134 chore(dist): trim to 4 targets + mark Windows continue-on-error (D-03)"
+  - "935a2ed chore(dist): pin Homebrew tap to Sinderella/homebrew-holt (D-04) — REVERTED in 8fcec20"
+  - "2d3787e chore(dist): confirm SHA-256 checksums enabled (D-12)"
+  - "e15cdc0 chore(workspace): publish = false on all 6 crates (D-02)"
+  - "2b94d1d chore(release): normalize trigger to v* + document customizations (D-11, D-03)"
+  - "b5bbfe8 ci(msrv): add 1.87.0 build-only matrix (D-08)"
+  - "59cdb36 fix(holt-cli): unbreak doc_lazy_continuation lint in lock.rs prose (Rule 3)"
+  - "6e35e49 test(version): assert --version against CARGO_PKG_VERSION (D-13)"
+  - "8fcec20 chore(dist): drop Homebrew tap from v0.1, defer to v0.1.x (D-04 revised)"
+  - "4320028 docs(planning): mark Homebrew tap deferred to v0.1.x — amendment banners"
 ---
 
 # Plan 04-01 Summary: dist scaffold + MSRV CI gate + version smoke test
@@ -110,10 +110,6 @@ DIST-02 marked deferred-to-v0.1.x in REQUIREMENTS.md. Trigger criteria for revis
 - **`repository.workspace = true` on all 6 crates is a `dist generate` prerequisite.** Without it, `dist generate` refused to emit `release.yml` because workspace inheritance of `repository` is not auto-resolved by dist. Hoisted as a Rule-3 fix in commit `6e91044` ahead of Task 4's `publish = false` audit.
 - **`sigkill_test_driver` `[[bin]]` leak.** `crates/holt-hooks/Cargo.toml` declares a test driver binary for the Phase 2 D-13 SIGKILL atomicity test. dist 0.31 ships any `[[bin]]` it finds; without `[package.metadata.dist] dist = false` on `holt-hooks`, dist would have published a `holt-hooks-{platform}.tar.gz` artifact for every release. Closed in commit `b6ce163` (Plan 04-01 Task 3a).
 - **`allow-dirty = ["ci"]` in dist-workspace.toml.** Protects the hand-edits in `release.yml` (Windows continue-on-error per D-03; `--version` parity check per D-14 added in Plan 04-02; Homebrew job removal comment per D-04 revision) from being clobbered on a deliberate `dist generate --mode ci` run. Future maintainers re-applying generation must temporarily comment out this line, regen, then re-apply the hand-edits — procedure documented in dist-workspace.toml's D-03 comment block.
-
-## git-history-cleanup rewrite (2026-04-29)
-
-99 commits in history were rewritten via `git-history-cleanup` mid-plan to fix a misidentified GitHub username (`Sinderella` → `Sinderella`) and normalize the author identity to `Sinderella`. All commit hashes referenced in this summary are POST-rewrite. The [redacted] hashes are preserved as history-rewrite `commit-oid` headers in the new fast-export but are not addressable from `git log`. Backup of [redacted] `.git/` retained at `/tmp/local-backup/` (local-only). Commit signatures (commit signing) were stripped by the rewrite — all 99 commits show `N` per `git log --pretty='%G?'`. Re-signing deferred; new commits are signed normally.
 
 ## Next
 

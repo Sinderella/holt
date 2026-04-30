@@ -156,7 +156,7 @@ The Windows job's failure must **not** block the release of the three Unix artif
 
 ### D-12 — Release artifact integrity: SHA-256 checksums via dist default
 
-**Decision:** Enable dist's SHA-256 checksum generation (default in dist 0.31). Do not enable GPG signing at v0.1; the maintainer's commit signing (commit signing) is sufficient release-time identity, and GPG complicates contributor onboarding.
+**Decision:** Enable dist's SHA-256 checksum generation (default in dist 0.31). Do not enable GPG signing at v0.1; the maintainer's commit signing is sufficient release-time identity, and GPG complicates contributor onboarding.
 
 **Why:** Checksums catch CDN-corruption / mid-download tampering at zero cost; GPG-signing the artifacts adds key-management overhead that doesn't pay off until v1.0+.
 

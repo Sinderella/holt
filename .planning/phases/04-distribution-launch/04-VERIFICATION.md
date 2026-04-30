@@ -206,10 +206,6 @@ None in modified files. Specific scans:
 | `holt --self-bench --json --iterations 30` p95 <20ms | PASS (overhead_p95_us = 0; release-build cold start beats budget by 4 orders of magnitude on this hardware) |
 | `holt --self-bench-hook PreToolUse --json --iterations 30` p95 <20ms | PASS (overhead_p95_us = 7083; under the 20000 budget by 12.9ms) |
 
-### Repo identity normalization
-
-The 2026-04-29 `git-history-cleanup` rewrite normalized 99 commits to `Sinderella <rawsec@gmail.com>` and `github.com/Sinderella/holt`. Per `git log --pretty='%h %G? %s'`, every commit shows `N` (No signature) — history-rewrite behavior, expected per user note. The [redacted] commits referenced `Sinderella/holt`; no surviving artifact in the codebase references the old identity (confirmed via Cargo.toml workspace.package.repository = `https://github.com/Sinderella/holt`, plus all README/CONTRIBUTING/RC1-CHECKLIST link to Sinderella consistently). Unsigned new commits accepted per user note.
-
 ### Deviations Documented
 
 1. **AMENDMENT 2026-04-29 — Homebrew tap dropped from v0.1.** Recorded in three locations (REQUIREMENTS.md / 04-CONTEXT.md / 04-02-PLAN.md). v0.1 substitutes `cargo binstall holt` + GH-release tarball + macOS xattr workaround. Re-add path codified in dist-workspace.toml + release.yml comment blocks. Trigger criteria for revisit: ≥3 Gatekeeper-friction issues OR Apple Developer Program enrollment becomes worthwhile.

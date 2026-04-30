@@ -5,7 +5,7 @@ created: 2026-04-28
 completed: 2026-04-29
 phases: 4
 plans: 9
-commits: ~110 (post history-rewrite rewrite)
+commits: ~110
 ---
 
 # v0.1 Milestone Audit — "Runtime hygiene wedge (the lovable MVP)"
@@ -68,7 +68,6 @@ commits: ~110 (post history-rewrite rewrite)
 
 - **D-08 narrowing (Phase 2):** `git rev-parse` heuristic for `cwd_label` deferred to v1.0; shelling out to git on the render path would violate D-15 budget.
 - **D-04 revision (Phase 4, AMENDMENT 2026-04-29):** Homebrew tap dropped from v0.1; deferred to v0.1.x. Trigger criteria for revisiting documented in 3 places (`dist-workspace.toml`, `release.yml` route-finder, `04-CONTEXT.md` AMENDMENT BANNER).
-- **`git-history-cleanup` rewrite (2026-04-29):** All 99 commits rewritten to fix the repo identity (`Sinderella/holt` → `Sinderella/holt`) and normalize the author identity to `Sinderella`. Commit signatures stripped (history-rewrite behavior); resume signing on new commits.
 
 ## Maintainer handoff (RC1-CHECKLIST.md, 153 LOC)
 
@@ -90,7 +89,6 @@ Post-tag verification (also documented in RC1-CHECKLIST.md §7):
 - D-08 branch 2 (cwd_label git rev-parse heuristic) — v1.0; needs `holt doctor` seam.
 - Code signing (macOS notarization, Windows EV cert) — v0.1.x+; trigger-gated.
 - Cargo install via crates.io — v0.5+; depends on internal-library API stability.
-- Re-signing the 99 history-rewrite-rewritten commits — accepted as unsigned; new commits sign normally.
 
 ## Files for next-milestone (v0.5) onboarding
 
