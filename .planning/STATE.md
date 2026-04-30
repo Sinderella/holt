@@ -74,6 +74,12 @@
 
 - (none)
 
+## Quick Tasks Completed
+
+| Date | Slug | Summary |
+|---|---|---|
+| 2026-04-30 | `cicd-defer-non-macos` | Disabled 6 non-macOS CI jobs via `if: false`; moved `lint` to macOS; reduced `release.yml` trigger to `workflow_dispatch` only. Defer marker `v0.5+1.0-prep`. ([details](quick/20260430-cicd-defer-non-macos/SUMMARY.md)) |
+
 ## Session Continuity
 
 **Next action:** Milestone v0.1 lifecycle — gsd-audit-milestone → gsd-complete-milestone → gsd-cleanup. After lifecycle: maintainer follows `RC1-CHECKLIST.md` (gh repo create → setup-labels.sh apply → tag v0.1.0-rc.1 push → verify release artifacts).

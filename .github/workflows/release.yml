@@ -74,16 +74,26 @@ permissions:
 #
 # If there's a prerelease-style suffix to the version, then the release(s)
 # will be marked as a prerelease.
+# ----------------------------------------------------------------------------
+# DEFERRED 2026-04-30: release auto-fire disabled until just before 1.0.
+#
+# The dist-generated workflow is preserved (matrix, parity check, sha256s) but
+# does NOT auto-run on tag-push or PRs during the v0.5 cycle. To trigger a
+# release manually (e.g., for a smoke-test rc.1 once the macOS-only matrix is
+# trimmed in dist-workspace.toml), use:
+#   gh workflow run Release
+# To restore auto-fire when 1.0 prep starts: replace the `workflow_dispatch:`
+# block below with the original triggers preserved in the comment.
+#
+# Original triggers (re-enable when 1.0 approaches):
+#   on:
+#     pull_request:
+#     push:
+#       tags:
+#         - 'v*'   # D-11: tag-push pattern (broader than dist default)
+# ----------------------------------------------------------------------------
 on:
-  pull_request:
-  push:
-    # D-11: tag-push pattern normalized to `v*` (broader than dist's default
-    # `'**[0-9]+.[0-9]+.[0-9]+*'`). Both patterns accept v0.1.0-rc.1, but `v*`
-    # is the canonical Rust-ecosystem release flow and is what 04-CONTEXT.md
-    # D-11 names. Hand-edit covered by `allow-dirty = ["ci"]` in
-    # dist-workspace.toml.
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 jobs:
   # Run 'dist plan' (or host) to determine what tasks we need to do
