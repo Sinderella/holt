@@ -9,11 +9,19 @@ A small Rust statusLine for Claude Code that wraps your existing config and tell
 ## Install
 
 ```bash
-cargo binstall holt   # any platform with cargo + cargo-binstall
-# Or grab a prebuilt binary from https://github.com/Sinderella/holt/releases
+# Build from source (cargo + Rust 1.87+; ~30s):
+cargo install --git https://github.com/Sinderella/holt --tag v0.1.0-rc.1 holt-cli
 ```
 
-On macOS, the manual-download path may trip Gatekeeper because v0.1 binaries are unsigned. Strip the quarantine flag once after extracting the tarball — `cargo binstall` and `dist`'s shell installer both place the binary at `~/.cargo/bin/holt`, so:
+Or download a prebuilt macOS binary (Intel + Apple Silicon) from the [Releases page](https://github.com/Sinderella/holt/releases/tag/v0.1.0-rc.1). Each tarball ships with a `.sha256` sidecar — verify before extracting:
+
+```bash
+shasum -a 256 -c holt-cli-aarch64-apple-darwin.tar.xz.sha256
+tar -xJf holt-cli-aarch64-apple-darwin.tar.xz
+mv holt-cli-aarch64-apple-darwin/holt ~/.local/bin/holt   # or wherever you keep binaries
+```
+
+On macOS, the prebuilt path may trip Gatekeeper because v0.1 binaries are unsigned. Strip the quarantine flag once after extracting:
 
 ```bash
 xattr -d com.apple.quarantine "$(command -v holt)"
@@ -21,9 +29,9 @@ xattr -d com.apple.quarantine "$(command -v holt)"
 
 (Apple Developer Program enrollment for native notarization is on the v0.1.x roadmap.)
 
-**Platform tier at v0.1:** Linux x86_64 and macOS (x86_64 + Apple Silicon) are tier-1; Windows x64 is best-effort and may lag releases. Windows is promoted to tier-1 when ≥10 [Windows-tagged issues](https://github.com/Sinderella/holt/issues?q=is%3Aissue+label%3Awindows) are filed against the repo OR a Windows contributor steps up. See [`docs/02-scope.md`](docs/02-scope.md) for the full v0.1 scope statement and the trigger criteria.
+**Platform tier at v0.1:** Linux x86_64 and macOS (x86_64 + Apple Silicon) are tier-1; Windows x64 is best-effort and may lag releases. The v0.1.0-rc.1 release ships macOS-only prebuilt artifacts; Linux and Windows users build from source via `cargo install --git`. Windows is promoted to tier-1 when ≥10 [Windows-tagged issues](https://github.com/Sinderella/holt/issues?q=is%3Aissue+label%3Awindows) are filed against the repo OR a Windows contributor steps up. See [`docs/02-scope.md`](docs/02-scope.md) for the full v0.1 scope statement and the trigger criteria.
 
-A Homebrew tap (`brew install Sinderella/holt`) is **deferred to v0.1.x** — re-added once macOS Gatekeeper friction is reported by ≥3 users or Apple notarization becomes worthwhile. See [`.planning/REQUIREMENTS.md`](.planning/REQUIREMENTS.md) (DIST-02) for the deferral rationale.
+A Homebrew tap (`brew install Sinderella/holt`) is **deferred to v0.1.x** — re-added once macOS Gatekeeper friction is reported by ≥3 users or Apple notarization becomes worthwhile. See [`.planning/milestones/v0.1-REQUIREMENTS.md`](.planning/milestones/v0.1-REQUIREMENTS.md) (DIST-02) for the deferral rationale.
 
 ### First-run
 
